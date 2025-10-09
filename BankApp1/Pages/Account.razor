@@ -1,0 +1,44 @@
+﻿@page "/accounts"
+@inject IAccountServices AccountServices
+
+<h3>Accounts</h3>
+
+<a href="/create-account" class="btn btn-primary">Create New Account</a>
+
+@if (accounts == null || !accounts.Any())
+{
+    <p>No accounts yet.</p>
+}
+else
+{
+    <table class="table table-striped mt-3">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Currency</th>
+                <th>Balance</th>
+                <th>Last Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var acc in accounts)
+            {
+                <tr>
+                    <td>@acc.Name</td>
+                    <td>@acc.Currency</td>
+                    <td>@acc.Balance</td>
+                    <td>@acc.LastUpdated</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<IBankAccount> accounts;
+
+    protected override void OnInitialized()
+    {
+        accounts = AccountServices.GetAllAccounts();
+    }
+}
