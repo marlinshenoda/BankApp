@@ -1,4 +1,6 @@
 using BankApp1;
+using BankApp1.Services;
+using BankApp1.Interfaces;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
