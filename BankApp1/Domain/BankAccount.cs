@@ -1,17 +1,16 @@
-﻿
-namespace BankApp1.Services
+﻿namespace BankApp1.Domain
 {
     public class BankAccount : IBankAccount
     {
         public Guid Id { get; } = Guid.NewGuid();
 
-        public string Name  { get; set; }
+        public string Name { get; set; }
 
-    public decimal Currency { get; set; }
+        public decimal Currency { get; set; }
 
         public decimal Balance { get; private set; }
 
-        public DateTime LastUpdated  { get; private set; }
+        public DateTime LastUpdated { get; private set; }
         public BankAccount(string name, decimal currency, decimal initialBalance = 0)
         {
             Name = name;
