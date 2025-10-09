@@ -1,0 +1,15 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/BankApp1/DesignTimeBuild/.dtbcache.v2
+/.vs/BankApp1/FileContentIndex/5558943f-3618-42d2-818d-def490a00dd8.vsidx
+/.vs/BankApp1/FileContentIndex/65e92fbe-3dcb-450e-a8f5-d6fdfcf0436b.vsidx
+/.vs/BankApp1/FileContentIndex/af5b0576-30ae-48ea-be43-8663589ad631.vsidx
+/.vs/BankApp1/FileContentIndex/da60a524-d2e6-4491-97bf-4c4dfb8b6dbe.vsidx
+/.vs/BankApp1/FileContentIndex/f5378a01-447b-4ed1-918e-930de645b10b.vsidx
+/.vs/BankApp1/v17/.futdcache.v2
+/.vs/BankApp1/v17/.suo
+/.vs/BankApp1/v17/DocumentLayout.json
+/.vs/ProjectEvaluation/bankapp1.metadata.v7.bin
+/.vs/ProjectEvaluation/bankapp1.projects.v7.bin
