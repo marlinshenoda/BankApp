@@ -1,9 +1,41 @@
 ﻿@page "/accounts"
 @inject IAccountServices AccountServices
 
-<h3>Accounts</h3>
 
-<a href="/create-account" class="btn btn-primary">Create New Account</a>
+<h3>Create Account</h3>
+
+<EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+    <div class="form-group">
+        <label>Name</label>
+        <InputText @bind-Value="_model.Name" class="form-control" />
+        
+    </div>
+
+    <div class="form-group">
+        <label>Currency</label>
+        <InputText @bind-Value="_model.Currency" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Initial Balance</label>
+        <InputNumber @bind-Value="_model.InitialBalance" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label>Account Type</label>
+        <InputSelect @bind-Value="_model.AccountType" class="form-select">
+            <option value="0">Deposit</option>
+            <option value="1">Savings</option>
+            <option value="2">Checking</option>
+        </InputSelect>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-2">Create Account</button>
+</EditForm>
+
+<hr />
+
+<h3>Accounts</h3>
 
 @if (accounts == null || !accounts.Any())
 {
@@ -35,10 +67,48 @@ else
 }
 
 @code {
+    private  createAccountModel _model = new();
     private IEnumerable<IBankAccount> accounts;
+
+    private Task CreateAccountAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_model.Name))
+        {
+            Console.WriteLine("Name is required.");
+            return Task.CompletedTask;
+        }
+
+        // Create the new account via the service
+        AccountServices.CreateAccount(_model.Name, _model.Currency, _model.InitialBalance,_model.AccountType);
+
+        // Refresh the list
+        accounts = AccountServices.GetAllAccounts();
+
+        // Clear input fields
+        _model = new();
+
+        return Task.CompletedTask;
+    }
+
 
     protected override void OnInitialized()
     {
         accounts = AccountServices.GetAllAccounts();
+    }
+    public class createAccountModel
+    {
+        public string? Name{ get; set; }
+        public AccountType AccountType{ get; set; }
+        public string? Currency { get; set; }
+        public decimal InitialBalance { get; set; } = 0;
+
+        public void Clear()
+        {
+            Name = string.Empty;
+            AccountType = AccountType.Deposit;
+            Currency = string.Empty;
+            InitialBalance = 0;
+        }
+
     }
 }

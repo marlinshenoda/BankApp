@@ -6,17 +6,22 @@
 
         public string Name { get; set; }
 
-        public decimal Currency { get; set; }
+        public string Currency { get; set; }
 
         public decimal Balance { get; private set; }
 
         public DateTime LastUpdated { get; private set; }
-        public BankAccount(string name, decimal currency, decimal initialBalance = 0)
+
+        public AccountType AccountType { get; set; }    
+
+        public BankAccount(string name, string currency, decimal initialBalance , AccountType accountType)
         {
             Name = name;
             Currency = currency;
             Balance = initialBalance;
+            AccountType = accountType;
             LastUpdated = DateTime.Now;
+
         }
         public void Deposit(decimal amount)
         {

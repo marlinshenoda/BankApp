@@ -1,4 +1,6 @@
-﻿namespace BankApp1.Interfaces
+﻿using BankApp1.Domain;
+
+namespace BankApp1.Interfaces
 { 
     /// <summary>
     /// Interface containing the bankAccount methods
@@ -7,9 +9,10 @@
     {
         Guid Id { get; }
         string Name { get; }    
-        decimal Currency { get; }   
+        string Currency { get; }   
         public decimal Balance { get;  }    
         DateTime LastUpdated { get; }
+        AccountType AccountType { get; }
 
         void Withdraw(decimal amount);  
         void Deposit(decimal amount);

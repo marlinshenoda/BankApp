@@ -7,16 +7,16 @@ namespace BankApp1.Services
     {
         private readonly List<IBankAccount> _accounts = new List<IBankAccount>();
 
-        public IBankAccount CreateAccount(string name, decimal currency, decimal intialBalance)
+        public IBankAccount CreateAccount(string name, string currency, decimal intialBalance, AccountType accountType)
         {
-            throw new NotImplementedException(); if (string.IsNullOrWhiteSpace(name))
+           if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name cannot be empty.");
             if (string.IsNullOrWhiteSpace(currency.ToString()))
                 throw new ArgumentException("Currency cannot be empty.");
             if (intialBalance < 0)
                 throw new ArgumentException("Initial balance cannot be negative.");
 
-            var account = new BankAccount(name, currency, intialBalance);
+            var account = new BankAccount(name, currency, intialBalance,accountType );
             _accounts.Add(account);
             return account;
         }
