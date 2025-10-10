@@ -11,7 +11,7 @@ namespace BankApp1.Services
         {
            if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name cannot be empty.");
-            if (string.IsNullOrWhiteSpace(currency.ToString()))
+            if (string.IsNullOrWhiteSpace(currency))
                 throw new ArgumentException("Currency cannot be empty.");
             if (intialBalance < 0)
                 throw new ArgumentException("Initial balance cannot be negative.");

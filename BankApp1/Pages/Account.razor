@@ -1,24 +1,33 @@
 ﻿@page "/accounts"
+@using System.ComponentModel.DataAnnotations
 @inject IAccountServices AccountServices
 
 
 <h3>Create Account</h3>
 
 <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
     <div class="form-group">
         <label>Name</label>
         <InputText @bind-Value="_model.Name" class="form-control" />
-        
+        <ValidationMessage For="@(() => _model.Name)" />
+
     </div>
 
     <div class="form-group">
         <label>Currency</label>
         <InputText @bind-Value="_model.Currency" class="form-control" />
+        <ValidationMessage For="@(() => _model.Currency)" />
+        <ValidationMessage For="@(() => _model.InitialBalance)" />
+
     </div>
 
     <div class="form-group">
         <label>Initial Balance</label>
         <InputNumber @bind-Value="_model.InitialBalance" class="form-control" />
+        <ValidationMessage For="@(() => _model.InitialBalance)" />
+
     </div>
 
     <div class="form-group">
@@ -28,6 +37,8 @@
             <option value="1">Savings</option>
             <option value="2">Checking</option>
         </InputSelect>
+        <ValidationMessage For="@(() => _model.AccountType)" />
+
     </div>
 
     <button type="submit" class="btn btn-success mt-2">Create Account</button>
@@ -97,9 +108,16 @@ else
     }
     public class createAccountModel
     {
+        [Required(ErrorMessage = "Name is required.")]
         public string? Name{ get; set; }
+
+        [Required(ErrorMessage = "Account Type is required.")]
         public AccountType AccountType{ get; set; }
+
+        [Required(ErrorMessage = "Currency is required.")]
         public string? Currency { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Balance cannot be negative.")]
         public decimal InitialBalance { get; set; } = 0;
 
         public void Clear()
