@@ -79,7 +79,7 @@ else
 
 @code {
     private  createAccountModel _model = new();
-    private IEnumerable<IBankAccount> accounts;
+    private IEnumerable<IBankAccount> ?accounts;
 
     private Task CreateAccountAsync()
     {
@@ -90,7 +90,7 @@ else
         }
 
         // Create the new account via the service
-        AccountServices.CreateAccount(_model.Name, _model.Currency, _model.InitialBalance,_model.AccountType);
+        AccountServices.CreateAccount(_model.Name, _model.Currency!, _model.InitialBalance,_model.AccountType);
 
         // Refresh the list
         accounts = AccountServices.GetAllAccounts();
