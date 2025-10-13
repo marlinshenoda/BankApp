@@ -10,7 +10,7 @@ namespace BankApp1.Interfaces
         Guid Id { get; }
         string Name { get; }    
         string Currency { get; }   
-        public decimal Balance { get;  }    
+        decimal Balance { get;  }    
         DateTime LastUpdated { get; }
         AccountType AccountType { get; }
 
