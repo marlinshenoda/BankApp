@@ -5,9 +5,11 @@ namespace BankApp1.Interfaces
 {
     public interface IAccountService {
 
-        Task<IBankAccount> CreateAccountAsync(string name, string currency, decimal initialBalance, AccountType accountType);
+        Task<IBankAccount> CreateAccountAsync(BankAccount account);
         Task<List<IBankAccount>> GetAllAccountsAsync();
         Task<IBankAccount?> GetAccountByIdAsync(Guid id);
+        Task<List<BankAccount>> GetAccountsByUserIdAsync(Guid userId);
+
         Task DepositAsync(Guid accountId, decimal amount, string? description = null);
         Task WithdrawAsync(Guid accountId, decimal amount, string? description = null);
         Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string? description = null);

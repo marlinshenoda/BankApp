@@ -11,18 +11,19 @@
         public decimal Balance { get; private set; }
 
         public DateTime LastUpdated { get; private set; }
-
+        public Guid UserId { get; set; }
         public AccountType AccountType { get; set; }
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public BankAccount() { }
 
-        public BankAccount(string name, string currency, decimal initialBalance , AccountType accountType)
+        public BankAccount(string name, string currency, decimal initialBalance , AccountType accountType , Guid userId)
         {
             Name = name;
             Currency = currency;
             Balance = initialBalance;
             AccountType = accountType;
             LastUpdated = DateTime.Now;
-
+            UserId = userId;
         }
         public void Deposit(decimal amount)
         {

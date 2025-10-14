@@ -3,6 +3,7 @@ using BankApp1.Domain;
 using BankApp1.Pages;
 using Blazored.LocalStorage;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace BankApp1.Services
 {
@@ -28,12 +29,21 @@ namespace BankApp1.Services
             {
                 await _localStorage.SetItemAsync(StorageKey, _accounts);
             }
-
-            public async Task<IBankAccount> CreateAccountAsync(string name, string currency, decimal initialBalance, AccountType accountType)
+        public async Task<List<BankAccount>> GetAccountsByUserIdAsync(Guid userId)
+        {
+            await LoadAsync();
+            return _accounts.Where(a => a.UserId == userId).ToList();
+        }
+        public async Task<IBankAccount> CreateAccountAsync(BankAccount account)
             {
-                await LoadAsync();
-                var account = new BankAccount(name, currency, initialBalance, accountType);
-                _accounts.Add(account);
+            if (account == null)
+                throw new ArgumentNullException(nameof(account));
+
+            if (account.UserId == Guid.Empty)
+                throw new ArgumentException("Account must have a valid UserId.");
+
+            await LoadAsync();
+               _accounts.Add(account);
                 await SaveAsync();
                 return account;
             }

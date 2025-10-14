@@ -9,13 +9,17 @@ namespace BankApp1.Services
         private const string CurrentUserKey = "current_user";
         private readonly IStorageService _storage;
         private User? _currentUser;
+        public event Func<Task>? OnChange;
 
         public SignInService(IStorageService storage)
         {
             _storage = storage;
         }
-
-        public event Action? OnChange;
+        public async Task NotifyChange()
+        {
+            if (OnChange != null) await OnChange.Invoke();
+        }
+      //  public event Action? OnChange;
         private void NotifyStateChanged() => OnChange?.Invoke();
 
         public bool IsSignedIn => _currentUser != null;
@@ -47,7 +51,8 @@ namespace BankApp1.Services
             _currentUser = user;
             await _storage.SaveAsync(CurrentUserKey, user);
             NotifyStateChanged();
-
+          //  _currentUser = await FetchUserFromApi(username);
+            if (OnChange != null)  OnChange.Invoke();
             return _currentUser;
         }
 
@@ -58,6 +63,12 @@ namespace BankApp1.Services
             NotifyStateChanged();
         }
 
+        public async Task SetCurrentUserAsync(User user)
+        {
+            _currentUser = user;
+            if (OnChange != null)
+                await OnChange.Invoke();
+        }
         public async Task<User?> GetCurrentUserAsync()
         {
             if (_currentUser != null) return _currentUser;

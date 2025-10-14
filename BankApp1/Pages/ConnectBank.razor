@@ -1,0 +1,121 @@
+﻿@page "/connectbank"
+@inject ISignInService SignInService
+@inject IAccountService AccountService
+
+<h3 class="mb-4">Connect a New Bank Account</h3>
+
+@if (currentUser == null)
+{
+    <div class="alert alert-warning">
+        You must be signed in to create an account.
+    </div>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Account Name</label>
+            <InputText @bind-Value="_model.Name" class="form-control" placeholder="e.g. My Savings Account" />
+            <ValidationMessage For="@(() => _model.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Currency</label>
+            <InputText @bind-Value="_model.Currency" class="form-control" placeholder="e.g. USD or SEK" />
+            <ValidationMessage For="@(() => _model.Currency)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Initial Balance</label>
+            <InputNumber @bind-Value="_model.InitialBalance" class="form-control" />
+            <ValidationMessage For="@(() => _model.InitialBalance)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Account Type</label>
+            <InputSelect @bind-Value="_model.AccountType" class="form-select">
+                <option value="0">Deposit</option>
+                <option value="1">Savings</option>
+                <option value="2">Checking</option>
+            </InputSelect>
+            <ValidationMessage For="@(() => _model.AccountType)" />
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Create Account</button>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <div class="alert alert-success mt-4">@SuccessMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger mt-4">@ErrorMessage</div>
+    }
+}
+
+@code {
+    private User? currentUser;
+    private CreateAccountModel _model = new();
+    private string? SuccessMessage;
+    private string? ErrorMessage;
+    private List<BankAccount>? userAccounts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await SignInService.GetCurrentUserAsync();
+    }
+
+    private async Task CreateAccountAsync()
+    {
+        if (currentUser == null)
+        {
+            ErrorMessage = "Please sign in first.";
+            return;
+        }
+
+        try
+        {
+            var account = new BankAccount(
+                _model.Name,
+                _model.Currency,
+                _model.InitialBalance,
+                _model.AccountType,
+                currentUser.Id
+            );
+
+            await AccountService.CreateAccountAsync(account);
+
+            // Fetch the updated accounts for the current user
+            var updatedAccounts = await AccountService.GetAccountsByUserIdAsync(currentUser.Id);
+            currentUser.Accounts = updatedAccounts;
+
+            // Update the global state in SignInService
+            await SignInService.SetCurrentUserAsync(currentUser);
+
+            SuccessMessage = $"Account '{account.Name}' created successfully!";
+            ErrorMessage = null;
+
+            // Reset form
+            _model = new CreateAccountModel();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error creating account: {ex.Message}";
+        }
+    }
+
+
+
+    public class CreateAccountModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Currency { get; set; } = "USD";
+        public decimal InitialBalance { get; set; }
+        public AccountType AccountType { get; set; }
+    }
+}
+

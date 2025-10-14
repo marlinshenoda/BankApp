@@ -9,7 +9,11 @@ namespace BankApp1.Interfaces
         Task<User?> GetCurrentUserAsync();
         bool IsSignedIn { get; }
         User? CurrentUser { get; }
-        event Action? OnChange;
+      //  event Action? OnChange;
+        Task NotifyChange();
+        event Func<Task>? OnChange;
+        Task SetCurrentUserAsync(User user);
+
 
     }
 }

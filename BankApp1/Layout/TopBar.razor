@@ -18,14 +18,22 @@
 </nav>
 
 @code {
+    private Func<Task>? _onChangeHandler;
+
     protected override void OnInitialized()
     {
-        SignInService.OnChange += StateHasChanged;
+        _onChangeHandler = async () =>
+           {
+               await InvokeAsync(StateHasChanged);
+           };
+
+        SignInService.OnChange += _onChangeHandler;
     }
 
     public void Dispose()
     {
-        SignInService.OnChange -= StateHasChanged;
+        if (_onChangeHandler != null)
+            SignInService.OnChange -= _onChangeHandler;
     }
 
     private void SignIn()

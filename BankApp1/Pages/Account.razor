@@ -3,47 +3,7 @@
 @inject IAccountService AccountService
 
 
-<h3>Create Account</h3>
 
-<EditForm Model="_model" OnValidSubmit="CreateAccountAsync">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <div class="form-group">
-        <label>Name</label>
-        <InputText @bind-Value="_model.Name" class="form-control" />
-        <ValidationMessage For="@(() => _model.Name)" />
-
-    </div>
-
-    <div class="form-group">
-        <label>Currency</label>
-        <InputText @bind-Value="_model.Currency" class="form-control" />
-        <ValidationMessage For="@(() => _model.Currency)" />
-
-    </div>
-
-    <div class="form-group">
-        <label>Initial Balance</label>
-        <InputNumber @bind-Value="_model.InitialBalance" class="form-control" />
-        <ValidationMessage For="@(() => _model.InitialBalance)" />
-
-    </div>
-
-    <div class="form-group">
-        <label>Account Type</label>
-        <InputSelect @bind-Value="_model.AccountType" class="form-select">
-            <option value="0">Deposit</option>
-            <option value="1">Savings</option>
-            <option value="2">Checking</option>
-        </InputSelect>
-        <ValidationMessage For="@(() => _model.AccountType)" />
-
-    </div>
-
-    <button type="submit" class="btn btn-success mt-2">Create Account</button>
-</EditForm>
-
-<hr />
 
 <h3>Accounts</h3>
 
@@ -80,25 +40,7 @@ else
     private  createAccountModel _model = new();
     private IEnumerable<IBankAccount> ?accounts;
 
-    private Task CreateAccountAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_model.Name))
-        {
-            Console.WriteLine("Name is required.");
-            return Task.CompletedTask;
-        }
-
-        // Create the new account via the service
-        AccountService.CreateAccountAsync(_model.Name, _model.Currency!, _model.InitialBalance,_model.AccountType);
-
-        // Refresh the list
-       // accounts = AccountService.();
-
-        // Clear input fields
-        _model = new();
-
-        return Task.CompletedTask;
-    }
+  
 
 
     protected override void OnInitialized()
