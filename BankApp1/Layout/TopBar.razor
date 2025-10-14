@@ -1,0 +1,40 @@
+﻿@inject ISignInService SignInService
+@inject NavigationManager NavigationManager
+
+<nav >
+   
+
+    <div class="user-actions">
+        @if (SignInService.IsSignedIn)
+        {
+            <span>Hello, @SignInService.CurrentUser?.Username!</span>
+            <button class="btn" @onclick="SignOut">Sign Out</button>
+        }
+        else
+        {
+            <button class="btn" @onclick="SignIn">Sign In</button>
+        }
+    </div>
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        SignInService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        SignInService.OnChange -= StateHasChanged;
+    }
+
+    private void SignIn()
+    {
+        NavigationManager.NavigateTo("/signin"); // Or open a modal
+    }
+
+    private async Task SignOut()
+    {
+        await SignInService.SignOutAsync();
+    }
+}

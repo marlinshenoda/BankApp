@@ -1,8 +1,9 @@
 ﻿namespace BankApp1.Interfaces
 {
-    public class IStorageService
+    public interface IStorageService
     {
-       // Task SaveAsync<T>(string key, T data);
-      //  Task<T?> LoadAsync<T>(string key);
+        Task SaveAsync<T>(string key, T value);
+        Task<T?> GetAsync<T>(string key);
+        Task RemoveAsync(string key);
     }
 }

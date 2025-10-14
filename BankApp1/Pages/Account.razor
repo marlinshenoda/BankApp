@@ -1,6 +1,6 @@
 ﻿@page "/accounts"
 @using System.ComponentModel.DataAnnotations
-@inject IAccountServices AccountServices
+@inject IAccountService AccountService
 
 
 <h3>Create Account</h3>
@@ -89,10 +89,10 @@ else
         }
 
         // Create the new account via the service
-        AccountServices.CreateAccount(_model.Name, _model.Currency!, _model.InitialBalance,_model.AccountType);
+        AccountService.CreateAccountAsync(_model.Name, _model.Currency!, _model.InitialBalance,_model.AccountType);
 
         // Refresh the list
-        accounts = AccountServices.GetAllAccounts();
+       // accounts = AccountService.();
 
         // Clear input fields
         _model = new();
@@ -103,7 +103,7 @@ else
 
     protected override void OnInitialized()
     {
-        accounts = AccountServices.GetAllAccounts();
+      //  accounts = AccountService.GetAllAccounts();
     }
     public class createAccountModel
     {
@@ -128,4 +128,4 @@ else
         }
 
     }
-}
+    }
