@@ -1,7 +1,52 @@
 ﻿@page "/"
+@inject ISignInService SignInService
 
-<PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+@if (currentUser == null)
+{
+    <p>Please sign in to view your accounts.</p>
+}
+else
+{
+    <div class="mb-3">
+        <h4>Welcome, @currentUser.Username!</h4>
+    </div>
+
+    <div class="row">
+        @if (currentUser.Accounts != null && currentUser.Accounts.Count > 0)
+        {
+            @foreach (var account in currentUser.Accounts)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title">@account.Name</h5>
+                            <p class="card-text">Balance: $@account.Balance</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No accounts found for this user.</p>
+        }
+    </div>
+}
+
+@code {
+    private User? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await SignInService.GetCurrentUserAsync();
+
+        // Optional: subscribe to changes if user signs in/out
+        SignInService.OnChange += async () =>
+        {
+            currentUser = await SignInService.GetCurrentUserAsync();
+            StateHasChanged();
+        };
+    }
+}
