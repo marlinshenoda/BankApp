@@ -16,5 +16,7 @@ namespace BankApp1.Interfaces
 
         void Withdraw(decimal amount);  
         void Deposit(decimal amount);
+        void TransferTo(BankAccount to, decimal amount, string? description = null);
+
     }
 }
