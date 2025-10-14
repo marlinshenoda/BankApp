@@ -1,5 +1,151 @@
-﻿<h3>NewTransaction</h3>
+﻿@page "/transactions"
+
+<h3>Bank Transactions</h3>
+
+@if (_accounts == null)
+{
+    <p>Loading accounts...</p>
+}
+else
+{
+    <div class="transaction-section">
+        <h3>Deposit</h3>
+        <select @bind="_depositAccountId">
+            <option value="">-- Select account --</option>
+            @foreach (var a in _accounts)
+            {
+                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+            }
+        </select>
+
+        <input type="number" step="0.01" @bind="_depositAmount" placeholder="Amount" />
+        <button @onclick="DoDeposit" disabled="@(!_canDeposit)">Deposit</button>
+    </div>
+
+    <div class="transaction-section">
+        <h3>Withdrawal</h3>
+        <select @bind="_withdrawAccountId">
+            <option value="">-- Select account --</option>
+            @foreach (var a in _accounts)
+            {
+                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+            }
+        </select>
+
+        <input type="number" step="0.01" @bind="_withdrawAmount" placeholder="Amount" />
+        <button @onclick="DoWithdraw" disabled="@(!_canWithdraw)">Withdraw</button>
+    </div>
+
+    <div class="transaction-section">
+        <h3>Transfer</h3>
+        <select @bind="_fromAccountId">
+            <option value="">-- From account --</option>
+            @foreach (var a in _accounts)
+            {
+                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+            }
+        </select>
+
+        <select @bind="_toAccountId">
+            <option value="">-- To account --</option>
+            @foreach (var a in _accounts)
+            {
+                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+            }
+        </select>
+
+        <input type="number" step="0.01" @bind="_transferAmount" placeholder="Amount" />
+        <button @onclick="DoTransfer" disabled="@(!_canTransfer)">Transfer</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p style="color:red">@_error</p>
+    }
+}
 
 @code {
+    private List<BankAccount>? _accounts;
+    private string? _error;
 
+    // Deposit
+    private Guid _depositAccountId;
+    private decimal _depositAmount;
+    private bool _canDeposit => _depositAccountId != Guid.Empty && _depositAmount > 0;
+
+    // Withdraw
+    private Guid _withdrawAccountId;
+    private decimal _withdrawAmount;
+    private bool _canWithdraw => _withdrawAccountId != Guid.Empty && _withdrawAmount > 0;
+
+    // Transfer
+    private Guid _fromAccountId;
+    private Guid _toAccountId;
+    private decimal _transferAmount;
+    private bool _canTransfer =>
+        _fromAccountId != Guid.Empty &&
+        _toAccountId != Guid.Empty &&
+        _fromAccountId != _toAccountId &&
+        _transferAmount > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _accounts = new List<BankAccount>
+        {
+            new BankAccount("Savings", "SEK", 1000, AccountType.Deposit),
+            new BankAccount("Checking", "SEK", 500, AccountType.Deposit)
+        };
+        await Task.CompletedTask;
+    }
+
+    private void DoDeposit()
+    {
+        try
+        {
+            var acc = _accounts?.FirstOrDefault(a => a.Id == _depositAccountId);
+            if (acc == null) throw new Exception("Account not found.");
+
+            acc.Deposit(_depositAmount);
+            _error = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void DoWithdraw()
+    {
+        try
+        {
+            var acc = _accounts?.FirstOrDefault(a => a.Id == _withdrawAccountId);
+            if (acc == null) throw new Exception("Account not found.");
+
+            acc.Withdraw(_withdrawAmount);
+            _error = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+
+    private void DoTransfer()
+    {
+        try
+        {
+            var from = _accounts?.FirstOrDefault(a => a.Id == _fromAccountId);
+            var to = _accounts?.FirstOrDefault(a => a.Id == _toAccountId);
+
+            if (from == null || to == null)
+                throw new Exception("Account not found.");
+
+            from.TransferTo(to, _transferAmount, "Manual transfer");
+            _error = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
 }

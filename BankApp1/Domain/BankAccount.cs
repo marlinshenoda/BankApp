@@ -12,7 +12,8 @@
 
         public DateTime LastUpdated { get; private set; }
 
-        public AccountType AccountType { get; set; }    
+        public AccountType AccountType { get; set; }
+        public List<Transaction> Transactions { get; set; } = new List<Transaction>();
 
         public BankAccount(string name, string currency, decimal initialBalance , AccountType accountType)
         {
@@ -43,5 +44,40 @@
             Balance -= amount;
             LastUpdated = DateTime.Now;
         }
+        public void TransferTo(BankAccount to, decimal amount, string? description = null)
+        {
+            if (amount <= 0)
+                throw new ArgumentException("Transfer amount must be positive.");
+
+            if (amount > Balance)
+                throw new InvalidOperationException("Insufficient funds.");
+
+            // Dra från avsändaren
+            Balance -= amount;
+            LastUpdated = DateTime.UtcNow;
+
+            Transactions.Add(new Transaction
+            {
+                Type = TransactionType.Transfer,
+                Amount = amount,
+                BalanceAfter = Balance,
+                Description = description ?? $"Transfer to {to.Name}",
+                RelatedAccountId = to.Id
+            });
+
+            // Sätt in på mottagaren
+            to.Balance += amount;
+            to.LastUpdated = DateTime.UtcNow;
+
+            to.Transactions.Add(new Transaction
+            {
+                Type = TransactionType.Transfer,
+                Amount = amount,
+                BalanceAfter = to.Balance,
+                Description = description ?? $"Transfer from {Name}",
+                RelatedAccountId = Id
+            });
+        }
+
     }
 }
