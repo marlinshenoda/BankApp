@@ -1,0 +1,67 @@
+﻿@page "/signin"
+@inject ISignInService SignInService
+@inject NavigationManager NavigationManager
+
+<h3>Sign In</h3>
+
+<div class="container mt-5" style="max-width: 400px;">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h3 class="card-title text-center mb-4">Sign In</h3>
+
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger">@ErrorMessage</div>
+            }
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input class="form-control" placeholder="Enter username" @bind="Username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">PIN</label>
+                <input class="form-control" type="password" placeholder="Enter PIN" @bind="Pin" />
+            </div>
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary" @onclick="PerformSignIn">Sign In</button>
+            </div>
+        </div>
+    </div>
+</div>
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p style="color:red">@ErrorMessage</p>
+}
+
+@code {
+    private string Username = "";
+    private string Pin = "";
+    private string ErrorMessage = "";
+
+ 
+
+    private async Task PerformSignIn()
+    {
+        try
+        {
+            var user = await SignInService.SignInAsync(Username, Pin);
+
+            if (user != null)
+            {
+                // Navigate to home page after successful sign-in
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                ErrorMessage = "Sign-in failed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+    }
+
+}
