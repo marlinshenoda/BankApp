@@ -58,7 +58,7 @@ namespace BankApp1.Services
             await _storage.SaveAsync(CurrentUserKey, user);
             NotifyStateChanged();
           //  _currentUser = await FetchUserFromApi(username);
-            if (OnChange != null)  OnChange.Invoke();
+            if (OnChange != null) await OnChange.Invoke();
             return _currentUser;
         }
 
