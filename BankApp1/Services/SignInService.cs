@@ -46,6 +46,12 @@ namespace BankApp1.Services
                 user = storedUser;
                 if (!string.IsNullOrEmpty(user.Pin) && user.Pin != pin)
                     throw new UnauthorizedAccessException("Invalid PIN.");
+                var accountsKey = $"bankapp_state_{username.ToLower()}_accounts";
+                var accountsJson = await _storage.GetAsync<string>(accountsKey);
+
+                user.Accounts = string.IsNullOrWhiteSpace(accountsJson)
+                    ? new List<BankAccount>()
+                    : JsonSerializer.Deserialize<List<BankAccount>>(accountsJson) ?? new List<BankAccount>();
             }
 
             _currentUser = user;
@@ -66,6 +72,8 @@ namespace BankApp1.Services
         public async Task SetCurrentUserAsync(User user)
         {
             _currentUser = user;
+            await SaveUserStateAsync();
+
             if (OnChange != null)
                 await OnChange.Invoke();
         }
@@ -88,6 +96,18 @@ namespace BankApp1.Services
 
             return _currentUser;
         }
+        private async Task SaveUserStateAsync()
+        {
+            if (_currentUser == null) return;
+
+            // Save main user object
+        
+            var accountsKey = $"bankapp_state_{_currentUser.Username.ToLower()}_accounts";
+            var accountsJson = JsonSerializer.Serialize(_currentUser.Accounts ?? new List<BankAccount>());
+            await _storage.SaveAsync(CurrentUserKey, _currentUser);
+            await _storage.SaveAsync(accountsKey, accountsJson);
+        }
+
     }
 }
 

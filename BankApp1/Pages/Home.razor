@@ -95,10 +95,12 @@ else
     private User? currentUser;
     private decimal totalBalance;
     private List<Transaction> recentTransactions = new();
+    private Func<Task>? _onChangeHandler;
 
     protected override async Task OnInitializedAsync()
     {
         currentUser = await SignInService.GetCurrentUserAsync();
+        totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
 
         if (currentUser != null)
         {
@@ -112,7 +114,14 @@ else
                 new Transaction { Timestamp = DateTime.Now.AddDays(-3), Description = "Salary Deposit", Amount = 2000m, Status = "Success", Category = "Income" },
             };
         }
+        _onChangeHandler = async () =>
+       {
+       currentUser = await SignInService.GetCurrentUserAsync();
+       totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
+       await InvokeAsync(StateHasChanged);
+       };
 
+        SignInService.OnChange += _onChangeHandler;
         // React to sign-in changes
         SignInService.OnChange += async () =>
        {
