@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject ISignInService SignInService
+@inject NavigationManager NavigationManager
 
 
 
@@ -100,10 +101,14 @@ else
     protected override async Task OnInitializedAsync()
     {
         currentUser = await SignInService.GetCurrentUserAsync();
-        totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
-
-        if (currentUser != null)
+        if (!SignInService.IsSignedIn)
         {
+            
+            NavigationManager.NavigateTo("/signin");
+            return;
+        }
+
+       
             totalBalance = currentUser.Accounts?.Sum(a => a.Balance) ?? 0;
 
             // Example mock transactions — replace with your real data later
@@ -113,22 +118,17 @@ else
                 new Transaction { Timestamp = DateTime.Now.AddDays(-2), Description = "Uber", Amount = -12.00m, Status = "Success", Category = "Transport" },
                 new Transaction { Timestamp = DateTime.Now.AddDays(-3), Description = "Salary Deposit", Amount = 2000m, Status = "Success", Category = "Income" },
             };
-        }
+        
         _onChangeHandler = async () =>
-       {
-       currentUser = await SignInService.GetCurrentUserAsync();
-       totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
-       await InvokeAsync(StateHasChanged);
-       };
+        {
+            currentUser = await SignInService.GetCurrentUserAsync();
+            totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
+            await InvokeAsync(StateHasChanged);
+        };
 
         SignInService.OnChange += _onChangeHandler;
-        // React to sign-in changes
-        SignInService.OnChange += async () =>
-       {
-       currentUser = await SignInService.GetCurrentUserAsync();
-       totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
-       StateHasChanged();
-       };
+
+       
 
     }
 }

@@ -10,6 +10,7 @@ namespace BankApp1.Services
         private readonly IStorageService _storage;
         private User? _currentUser;
         public event Func<Task>? OnChange;
+        private bool _isSignedIn = false;
 
         public SignInService(IStorageService storage)
         {
@@ -22,7 +23,7 @@ namespace BankApp1.Services
       //  public event Action? OnChange;
         private void NotifyStateChanged() => OnChange?.Invoke();
 
-        public bool IsSignedIn => _currentUser != null;
+        public bool IsSignedIn => _isSignedIn;
         public User? CurrentUser => _currentUser;
 
         public async Task<User?> SignInAsync(string username, string pin)
@@ -55,6 +56,8 @@ namespace BankApp1.Services
             }
 
             _currentUser = user;
+            _isSignedIn = true;
+
             await _storage.SaveAsync(CurrentUserKey, user);
             NotifyStateChanged();
           //  _currentUser = await FetchUserFromApi(username);
@@ -65,6 +68,8 @@ namespace BankApp1.Services
         public async Task SignOutAsync()
         {
             _currentUser = null;
+            _isSignedIn = false;
+
             await _storage.RemoveAsync(CurrentUserKey);
             NotifyStateChanged();
         }
@@ -79,7 +84,10 @@ namespace BankApp1.Services
         }
         public async Task<User?> GetCurrentUserAsync()
         {
-            if (_currentUser != null) return _currentUser;
+            if (_currentUser != null)
+            {
+
+                return _currentUser; }
 
             var storedUser = await _storage.GetAsync<User>(CurrentUserKey);
             if (storedUser == null) return null;
@@ -93,6 +101,7 @@ namespace BankApp1.Services
             _currentUser.Accounts = string.IsNullOrWhiteSpace(accountsJson)
                 ? new List<BankAccount>()
                 : JsonSerializer.Deserialize<List<BankAccount>>(accountsJson) ?? new List<BankAccount>();
+            _isSignedIn = false;
 
             return _currentUser;
         }
