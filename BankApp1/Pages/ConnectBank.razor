@@ -1,4 +1,5 @@
 ﻿@page "/connectbank"
+@using System.ComponentModel.DataAnnotations
 @inject ISignInService SignInService
 @inject IAccountService AccountService
 
@@ -112,10 +113,26 @@ else
 
     public class CreateAccountModel
     {
-        public string Name { get; set; } = string.Empty;
-        public string Currency { get; set; } = "USD";
-        public decimal InitialBalance { get; set; }
+      
+        [Required(ErrorMessage = "Name is required.")]
+        public string? Name { get; set; }
+
+        [Required(ErrorMessage = "Account Type is required.")]
         public AccountType AccountType { get; set; }
+
+        [Required(ErrorMessage = "Currency is required.")]
+        public string? Currency { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Balance cannot be negative.")]
+        public decimal InitialBalance { get; set; } = 0;
+
+        public void Clear()
+        {
+            Name = string.Empty;
+            AccountType = AccountType.Deposit;
+            Currency = string.Empty;
+            InitialBalance = 0;
+        }
     }
 }
 

@@ -24,7 +24,6 @@ else
                 </span>
             </div>
         </div>
-        //TODO fix Balance display
         <!-- Bank Accounts Section -->
         <div class="row mb-4">
             <h4>My Accounts</h4>
@@ -107,8 +106,10 @@ else
             NavigationManager.NavigateTo("/signin");
             return;
         }
+        Console.WriteLine($"Loaded {currentUser.Accounts?.Count ?? 0} accounts");
 
-       
+      
+
             totalBalance = currentUser.Accounts?.Sum(a => a.Balance) ?? 0;
 
             // Example mock transactions — replace with your real data later

@@ -1,4 +1,6 @@
-﻿namespace BankApp1.Domain
+﻿using System.Text.Json.Serialization;
+
+namespace BankApp1.Domain
 {
     public class BankAccount : IBankAccount
     {
@@ -7,7 +9,7 @@
         public string Name { get; set; }
 
         public string Currency { get; set; }
-
+        [JsonInclude]
         public decimal Balance { get; private set; }
 
         public DateTime LastUpdated { get; private set; }
@@ -22,8 +24,9 @@
             Currency = currency;
             Balance = initialBalance;
             AccountType = accountType;
-            LastUpdated = DateTime.Now;
             UserId = userId;
+            LastUpdated = DateTime.Now;
+
         }
         public void Deposit(decimal amount)
         {
