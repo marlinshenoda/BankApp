@@ -4,13 +4,15 @@ namespace BankApp1.Domain
 {
     public class BankAccount : IBankAccount
     {
+        [JsonInclude]
+
         public Guid Id { get; } = Guid.NewGuid();
 
         public string Name { get; set; }
 
-        public string Currency { get; set; }
+        public string? Currency { get; set; } = "SEK";
         [JsonInclude]
-        public decimal Balance { get; private set; }
+        public decimal Balance { get; internal set; }
 
         public DateTime LastUpdated { get; private set; }
         public Guid UserId { get; set; }
@@ -56,7 +58,7 @@ namespace BankApp1.Domain
             if (amount > Balance)
                 throw new InvalidOperationException("Insufficient funds.");
 
-            // Dra från avsändaren
+            //  från 
             Balance -= amount;
             LastUpdated = DateTime.UtcNow;
 
@@ -69,7 +71,7 @@ namespace BankApp1.Domain
                 RelatedAccountId = to.Id
             });
 
-            // Sätt in på mottagaren
+            // till
             to.Balance += amount;
             to.LastUpdated = DateTime.UtcNow;
 

@@ -1,4 +1,6 @@
 ﻿@page "/transactions"
+@inject IAccountService AccountService
+@inject ISignInService SignInService
 
 <h3>Bank Transactions</h3>
 
@@ -6,146 +8,190 @@
 {
     <p>Loading accounts...</p>
 }
+else if (!_accounts.Any())
+{
+    <p>No accounts found for your user.</p>
+}
 else
 {
-    <div class="transaction-section">
-        <h3>Deposit</h3>
-        <select @bind="_depositAccountId">
+    <div class="transaction-section mb-4">
+        <h4>Deposit</h4>
+        <select @bind="_depositAccountIdString" class="form-select mb-2">
             <option value="">-- Select account --</option>
             @foreach (var a in _accounts)
             {
-                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
 
-        <input type="number" step="0.01" @bind="_depositAmount" placeholder="Amount" />
-        <button @onclick="DoDeposit" disabled="@(!_canDeposit)">Deposit</button>
+        <input type="number" step="0.01" @bind="_depositAmount" placeholder="Amount" class="form-control mb-2" />
+        <button @onclick="DoDeposit" disabled="@(!_canDeposit)" class="btn btn-success">Deposit</button>
     </div>
 
-    <div class="transaction-section">
-        <h3>Withdrawal</h3>
-        <select @bind="_withdrawAccountId">
+    <hr />
+
+    <div class="transaction-section mb-4">
+        <h4>Withdraw</h4>
+        <select @bind="_withdrawAccountIdString" class="form-select mb-2">
             <option value="">-- Select account --</option>
             @foreach (var a in _accounts)
             {
-                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
 
-        <input type="number" step="0.01" @bind="_withdrawAmount" placeholder="Amount" />
-        <button @onclick="DoWithdraw" disabled="@(!_canWithdraw)">Withdraw</button>
+        <input type="number" step="0.01" @bind="_withdrawAmount" placeholder="Amount" class="form-control mb-2" />
+        <button @onclick="DoWithdraw" disabled="@(!_canWithdraw)" class="btn btn-warning">Withdraw</button>
     </div>
 
-    <div class="transaction-section">
-        <h3>Transfer</h3>
-        <select @bind="_fromAccountId">
+    <hr />
+
+    <div class="transaction-section mb-4">
+        <h4>Transfer</h4>
+        <select @bind="_fromAccountIdString" class="form-select mb-2">
             <option value="">-- From account --</option>
             @foreach (var a in _accounts)
             {
-                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
 
-        <select @bind="_toAccountId">
+        <select @bind="_toAccountIdString" class="form-select mb-2">
             <option value="">-- To account --</option>
             @foreach (var a in _accounts)
             {
-                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
+                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
 
-        <input type="number" step="0.01" @bind="_transferAmount" placeholder="Amount" />
-        <button @onclick="DoTransfer" disabled="@(!_canTransfer)">Transfer</button>
+        <input type="number" step="0.01" @bind="_transferAmount" placeholder="Amount" class="form-control mb-2" />
+        <button @onclick="DoTransfer" disabled="@(!_canTransfer)" class="btn btn-primary">Transfer</button>
     </div>
 
     @if (!string.IsNullOrEmpty(_error))
     {
-        <p style="color:red">@_error</p>
+        <div class="alert alert-danger mt-3">@_error</div>
+    }
+
+    @if (!string.IsNullOrEmpty(_success))
+    {
+        <div class="alert alert-success mt-3">@_success</div>
     }
 }
 
 @code {
     private List<BankAccount>? _accounts;
+    private User? _currentUser;
     private string? _error;
+    private string? _success;
 
-    // Deposit
-    private Guid _depositAccountId;
-    private decimal _depositAmount;
-    private bool _canDeposit => _depositAccountId != Guid.Empty && _depositAmount > 0;
+    // String-bound IDs for proper Blazor dropdown behavior
+    private string _depositAccountIdString = "";
+    private string _withdrawAccountIdString = "";
+    private string _fromAccountIdString = "";
+    private string _toAccountIdString = "";
 
-    // Withdraw
-    private Guid _withdrawAccountId;
-    private decimal _withdrawAmount;
-    private bool _canWithdraw => _withdrawAccountId != Guid.Empty && _withdrawAmount > 0;
+    private Guid DepositAccountId => Guid.TryParse(_depositAccountIdString, out var id) ? id : Guid.Empty;
+    private Guid WithdrawAccountId => Guid.TryParse(_withdrawAccountIdString, out var id) ? id : Guid.Empty;
+    private Guid FromAccountId => Guid.TryParse(_fromAccountIdString, out var id) ? id : Guid.Empty;
+    private Guid ToAccountId => Guid.TryParse(_toAccountIdString, out var id) ? id : Guid.Empty;
 
-    // Transfer
-    private Guid _fromAccountId;
-    private Guid _toAccountId;
-    private decimal _transferAmount;
+    private decimal _depositAmount, _withdrawAmount, _transferAmount;
+
+    private bool _canDeposit => DepositAccountId != Guid.Empty && _depositAmount > 0;
+    private bool _canWithdraw => WithdrawAccountId != Guid.Empty && _withdrawAmount > 0;
     private bool _canTransfer =>
-        _fromAccountId != Guid.Empty &&
-        _toAccountId != Guid.Empty &&
-        _fromAccountId != _toAccountId &&
+        FromAccountId != Guid.Empty &&
+        ToAccountId != Guid.Empty &&
+        FromAccountId != ToAccountId &&
         _transferAmount > 0;
 
     protected override async Task OnInitializedAsync()
     {
-        _accounts = new List<BankAccount>
+        _currentUser = await SignInService.GetCurrentUserAsync();
+
+        if (_currentUser == null)
         {
-          //  new BankAccount("Savings", "SEK", 1000, AccountType.Deposit),
-           // new BankAccount("Checking", "SEK", 500, AccountType.Deposit)
-        };
-        await Task.CompletedTask;
+            _error = "Please sign in first.";
+            return;
+        }
+
+    
+        _accounts = _currentUser.Accounts ?? new List<BankAccount>();
+
     }
 
-    private void DoDeposit()
+    private async Task DoDeposit()
     {
         try
         {
-            var acc = _accounts?.FirstOrDefault(a => a.Id == _depositAccountId);
+            var acc = _accounts?.FirstOrDefault(a => a.Id == DepositAccountId);
             if (acc == null) throw new Exception("Account not found.");
 
-            acc.Deposit(_depositAmount);
-            _error = string.Empty;
+            await AccountService.DepositAsync(acc.Id, _depositAmount, "Manual deposit");
+            acc.Balance += _depositAmount;
+            _success = $"Deposited {_depositAmount:C} to {acc.Name}.";
+            _error = null;
+            _depositAmount = 0;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+            _success = null;
         }
     }
 
-    private void DoWithdraw()
+    private async Task DoWithdraw()
     {
         try
         {
-            var acc = _accounts?.FirstOrDefault(a => a.Id == _withdrawAccountId);
+            var acc = _accounts?.FirstOrDefault(a => a.Id == WithdrawAccountId);
             if (acc == null) throw new Exception("Account not found.");
 
-            acc.Withdraw(_withdrawAmount);
-            _error = string.Empty;
+            if (_withdrawAmount > acc.Balance)
+                throw new Exception("Insufficient funds.");
+
+            await AccountService.WithdrawAsync(acc.Id, _withdrawAmount, "Manual withdraw");
+            acc.Balance -= _withdrawAmount;
+            _success = $"Withdrew {_withdrawAmount:C} from {acc.Name}.";
+            _error = null;
+            _withdrawAmount = 0;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+            _success = null;
         }
     }
 
-    private void DoTransfer()
+    private async Task DoTransfer()
     {
         try
         {
-            var from = _accounts?.FirstOrDefault(a => a.Id == _fromAccountId);
-            var to = _accounts?.FirstOrDefault(a => a.Id == _toAccountId);
+            var from = _accounts?.FirstOrDefault(a => a.Id == FromAccountId);
+            var to = _accounts?.FirstOrDefault(a => a.Id == ToAccountId);
 
             if (from == null || to == null)
                 throw new Exception("Account not found.");
 
-            from.TransferTo(to, _transferAmount, "Manual transfer");
-            _error = string.Empty;
+            if (_transferAmount > from.Balance)
+                throw new Exception("Insufficient funds in source account.");
+
+            await AccountService.TransferAsync(from.Id, to.Id, _transferAmount, "Manual transfer");
+
+            from.Balance -= _transferAmount;
+            to.Balance += _transferAmount;
+            _success = $"Transferred {_transferAmount:C} from {from.Name} to {to.Name}.";
+            _error = null;
+            _transferAmount = 0;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
+            _success = null;
         }
     }
 }
