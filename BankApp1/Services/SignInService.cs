@@ -31,39 +31,55 @@ namespace BankApp1.Services
             if (string.IsNullOrWhiteSpace(username))
                 throw new ArgumentException("Username required.");
 
+            // Use username as the key for now
             var key = $"bankapp_state_{username.ToLower()}";
             var storedUser = await _storage.GetAsync<User>(key);
             User user;
 
             if (storedUser == null)
             {
-                // New user
-                user = new User { Username = username, Pin = pin, Accounts = new List<BankAccount>() };
+                // New user → create one and give it a unique ID
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Username = username,
+                    Pin = pin,
+                    Accounts = new List<BankAccount>()
+                };
+
+                // Save with username key
                 await _storage.SaveAsync(key, user);
+
+                // ALSO create an empty account list entry
+                var accountsKey = $"bank_accounts_{user.Id}";
+                await _storage.SaveAsync(accountsKey, user.Accounts);
             }
             else
             {
-                // Existing user — check PIN
+                // Existing user → check PIN
                 user = storedUser;
                 if (!string.IsNullOrEmpty(user.Pin) && user.Pin != pin)
                     throw new UnauthorizedAccessException("Invalid PIN.");
-                var accountsKey = $"bankapp_state_{username.ToLower()}_accounts";
-                var accountsJson = await _storage.GetAsync<string>(accountsKey);
 
-                user.Accounts = string.IsNullOrWhiteSpace(accountsJson)
-                    ? new List<BankAccount>()
-                    : JsonSerializer.Deserialize<List<BankAccount>>(accountsJson) ?? new List<BankAccount>();
+                // Load their accounts using their unique ID
+                var accountsKey = $"bank_accounts_{user.Id}";
+                var accounts = await _storage.GetAsync<List<BankAccount>>(accountsKey);
+                user.Accounts = accounts ?? new List<BankAccount>();
             }
 
             _currentUser = user;
             _isSignedIn = true;
 
+            // Save "currently signed-in user" globally
             await _storage.SaveAsync(CurrentUserKey, user);
+
             NotifyStateChanged();
-          //  _currentUser = await FetchUserFromApi(username);
-            if (OnChange != null) await OnChange.Invoke();
+            if (OnChange != null)
+                await OnChange.Invoke();
+
             return _currentUser;
         }
+
 
         public async Task SignOutAsync()
         {
@@ -95,7 +111,7 @@ namespace BankApp1.Services
             _currentUser = storedUser;
 
             // Load bank accounts if exist
-            var accountsKey = $"bankapp_state_{_currentUser.Username.ToLower()}_accounts";
+            var accountsKey = $"bank_accounts_{_currentUser.Id}";
             var accountsJson = await _storage.GetAsync<string>(accountsKey);
 
             _currentUser.Accounts = string.IsNullOrWhiteSpace(accountsJson)
@@ -109,12 +125,12 @@ namespace BankApp1.Services
         {
             if (_currentUser == null) return;
 
-            // Save main user object
-        
-            var accountsKey = $"bankapp_state_{_currentUser.Username.ToLower()}_accounts";
-            var accountsJson = JsonSerializer.Serialize(_currentUser.Accounts ?? new List<BankAccount>());
-            await _storage.SaveAsync(CurrentUserKey, _currentUser);
-            await _storage.SaveAsync(accountsKey, accountsJson);
+
+
+            var accountsKey = $"bank_accounts_{_currentUser.Id}";
+
+
+            await _storage.SaveAsync(accountsKey, _currentUser.Accounts ?? new List<BankAccount>());
         }
 
     }

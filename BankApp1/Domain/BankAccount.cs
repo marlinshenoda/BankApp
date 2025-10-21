@@ -5,12 +5,12 @@ namespace BankApp1.Domain
     public class BankAccount : IBankAccount
     {
         [JsonInclude]
-
-        public Guid Id { get; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         public string Name { get; set; }
 
         public string? Currency { get; set; } = "SEK";
+
         [JsonInclude]
         public decimal Balance { get; internal set; }
 
@@ -19,7 +19,6 @@ namespace BankApp1.Domain
         public AccountType AccountType { get; set; }
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
         public BankAccount() { }
-
         public BankAccount(string name, string currency, decimal initialBalance , AccountType accountType , Guid userId)
         {
             Name = name;
@@ -64,11 +63,11 @@ namespace BankApp1.Domain
 
             Transactions.Add(new Transaction
             {
-                Type = TransactionType.Transfer,
+                TransactionType = TransactionType.TransferOut,
                 Amount = amount,
                 BalanceAfter = Balance,
                 Description = description ?? $"Transfer to {to.Name}",
-                RelatedAccountId = to.Id
+                ToAccountId = to.Id
             });
 
             // till
@@ -77,11 +76,13 @@ namespace BankApp1.Domain
 
             to.Transactions.Add(new Transaction
             {
-                Type = TransactionType.Transfer,
+                TransactionType = TransactionType.TransferIn,
                 Amount = amount,
                 BalanceAfter = to.Balance,
                 Description = description ?? $"Transfer from {Name}",
-                RelatedAccountId = Id
+                FromAccountId = Id,
+                ToAccountId = to.Id
+
             });
         }
 

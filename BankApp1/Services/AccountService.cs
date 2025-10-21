@@ -11,7 +11,6 @@ namespace BankApp1.Services
     public class AccountService : IAccountService
     {
         
-            private const string StorageKey = "bank_accounts";
             private readonly ILocalStorageService _localStorage;
             private List<BankAccount> _accounts = new();
             private readonly ISignInService _signInService;
@@ -34,7 +33,8 @@ namespace BankApp1.Services
             if (user == null)
                 throw new Exception("User not signed in.");
 
-            return $"bank_accounts_{user.Id}";
+            return  $"bank_accounts_{user.Id}";
+
         }
 
         public async Task UpdateAccountAsync(BankAccount account)
@@ -76,10 +76,7 @@ namespace BankApp1.Services
             existing.Add(account);
             await _localStorage.SetItemAsync(key, existing);
             return account;
-            //await LoadAsync();
-            //   _accounts.Add(account);
-            //    await SaveAsync();
-            //    return account;
+        
             }
 
             public async Task<List<IBankAccount>> GetAllAccountsAsync()
@@ -112,17 +109,33 @@ namespace BankApp1.Services
                 await SaveAsync();
             }
 
-            public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string? description = null)
-            {
-                await LoadAsync();
-                if (fromAccountId == toAccountId)
-                    throw new ArgumentException("Cannot transfer to the same account.");
+        public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string description)
+        {
+            var user = await _signInService.GetCurrentUserAsync();
+            if (user == null)
+                throw new InvalidOperationException("No user is signed in.");
 
-                var from = _accounts.First(a => a.Id == fromAccountId);
-                var to = _accounts.First(a => a.Id == toAccountId);
-                from.TransferTo(to, amount, description);
-                await SaveAsync();
-            }
+            var accountsKey = $"bank_accounts_{user.Id}";
+            var accounts = await _localStorage.GetItemAsync<List<BankAccount>>(accountsKey) ?? new List<BankAccount>();
+
+
+
+            Console.WriteLine($"[TransferAsync] loaded {accounts.Count} accounts. ids: {string.Join(", ", accounts.Select(a => a.Id))}");
+
+            var from = accounts.FirstOrDefault(a => a.Id == fromAccountId)
+                ?? throw new KeyNotFoundException($"Source account {fromAccountId} not found in local storage.");
+
+            var to = accounts.FirstOrDefault(a => a.Id == toAccountId)
+                ?? throw new KeyNotFoundException($"Destination account {toAccountId} not found in local storage.");
+
+            from.TransferTo(to, amount, description);
+
+            // Save back to local storage
+            await _localStorage.SetItemAsync(accountsKey, accounts);
+
+            Console.WriteLine($"[TransferAsync] ✅ Transfer completed between {from.Id} and {to.Id}");
+        }
+
         public async Task<List<Transaction>> GetRecentTransactionsAsync(Guid userId)
         {
             await Task.Delay(100); 

@@ -63,7 +63,7 @@ else
     private CreateAccountModel _model = new();
     private string? SuccessMessage;
     private string? ErrorMessage;
-    private List<BankAccount>? userAccounts;
+  
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,6 +81,7 @@ else
         try
         {
             var account = new BankAccount(
+             
                 _model.Name,
                 _model.Currency,
                 _model.InitialBalance,

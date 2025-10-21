@@ -14,97 +14,63 @@ else if (!_accounts.Any())
 }
 else
 {
-    <div class="transaction-section mb-4">
-        <h4>Deposit</h4>
-        <select @bind="_depositAccountIdString" class="form-select mb-2">
-            <option value="">-- Select account --</option>
-            @foreach (var a in _accounts)
-            {
-                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
-            }
-        </select>
-
-        <input type="number" step="0.01" @bind="_depositAmount" placeholder="Amount" class="form-control mb-2" />
-        <button @onclick="DoDeposit" disabled="@(!_canDeposit)" class="btn btn-success">Deposit</button>
-    </div>
-
-    <hr />
-
-    <div class="transaction-section mb-4">
-        <h4>Withdraw</h4>
-        <select @bind="_withdrawAccountIdString" class="form-select mb-2">
-            <option value="">-- Select account --</option>
-            @foreach (var a in _accounts)
-            {
-                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
-            }
-        </select>
-
-        <input type="number" step="0.01" @bind="_withdrawAmount" placeholder="Amount" class="form-control mb-2" />
-        <button @onclick="DoWithdraw" disabled="@(!_canWithdraw)" class="btn btn-warning">Withdraw</button>
-    </div>
-
     <hr />
 
     <div class="transaction-section mb-4">
         <h4>Transfer</h4>
-        <select @bind="_fromAccountIdString" class="form-select mb-2">
+
+        <select @bind="Model.FromAccountId" class="form-select mb-2">
             <option value="">-- From account --</option>
             @foreach (var a in _accounts)
             {
-                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
+                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
 
-        <select @bind="_toAccountIdString" class="form-select mb-2">
+        <select @bind="Model.ToAccountId" class="form-select mb-2">
             <option value="">-- To account --</option>
             @foreach (var a in _accounts)
             {
-                <option value="@a.Id.ToString()">@a.Name (@a.Balance.ToString("C"))</option>
+                <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
 
-        <input type="number" step="0.01" @bind="_transferAmount" placeholder="Amount" class="form-control mb-2" />
-        <button @onclick="DoTransfer" disabled="@(!_canTransfer)" class="btn btn-primary">Transfer</button>
+        <input type="number" step="0.01" @bind="Model.Amount" placeholder="Amount" class="form-control mb-2" />
+        <button @onclick="DoTransfer" disabled="@(!CanTransfer)" class="btn btn-primary">Transfer</button>
     </div>
 
-    @if (!string.IsNullOrEmpty(_error))
+    @if (!string.IsNullOrEmpty(Error))
     {
-        <div class="alert alert-danger mt-3">@_error</div>
+        <div class="alert alert-danger mt-3">@Error</div>
     }
 
-    @if (!string.IsNullOrEmpty(_success))
+    @if (!string.IsNullOrEmpty(Success))
     {
-        <div class="alert alert-success mt-3">@_success</div>
+        <div class="alert alert-success mt-3">@Success</div>
     }
 }
 
 @code {
     private List<BankAccount>? _accounts;
     private User? _currentUser;
-    private string? _error;
-    private string? _success;
 
-    // String-bound IDs for proper Blazor dropdown behavior
-    private string _depositAccountIdString = "";
-    private string _withdrawAccountIdString = "";
-    private string _fromAccountIdString = "";
-    private string _toAccountIdString = "";
+    private string? Error;
+    private string? Success;
 
-    private Guid DepositAccountId => Guid.TryParse(_depositAccountIdString, out var id) ? id : Guid.Empty;
-    private Guid WithdrawAccountId => Guid.TryParse(_withdrawAccountIdString, out var id) ? id : Guid.Empty;
-    private Guid FromAccountId => Guid.TryParse(_fromAccountIdString, out var id) ? id : Guid.Empty;
-    private Guid ToAccountId => Guid.TryParse(_toAccountIdString, out var id) ? id : Guid.Empty;
+    private readonly TransferFormModel Model = new();
 
-    private decimal _depositAmount, _withdrawAmount, _transferAmount;
+    private bool CanTransfer =>
+        Model.FromAccountId != Guid.Empty &&
+        Model.ToAccountId != Guid.Empty &&
+        Model.FromAccountId != Model.ToAccountId &&
+        Model.Amount > 0;
 
-    private bool _canDeposit => DepositAccountId != Guid.Empty && _depositAmount > 0;
-    private bool _canWithdraw => WithdrawAccountId != Guid.Empty && _withdrawAmount > 0;
-    private bool _canTransfer =>
-        FromAccountId != Guid.Empty &&
-        ToAccountId != Guid.Empty &&
-        FromAccountId != ToAccountId &&
-        _transferAmount > 0;
+    public class TransferFormModel
+    {
+        public Guid FromAccountId { get; set; }
+        public Guid ToAccountId { get; set; }
+        public decimal Amount { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,86 +78,49 @@ else
 
         if (_currentUser == null)
         {
-            _error = "Please sign in first.";
+            Error = "Please sign in first.";
             return;
         }
 
-    
         _accounts = _currentUser.Accounts ?? new List<BankAccount>();
-
-    }
-
-    private async Task DoDeposit()
-    {
-        try
-        {
-            var acc = _accounts?.FirstOrDefault(a => a.Id == DepositAccountId);
-            if (acc == null) throw new Exception("Account not found.");
-
-            await AccountService.DepositAsync(acc.Id, _depositAmount, "Manual deposit");
-            acc.Balance += _depositAmount;
-            _success = $"Deposited {_depositAmount:C} to {acc.Name}.";
-            _error = null;
-            _depositAmount = 0;
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-            _success = null;
-        }
-    }
-
-    private async Task DoWithdraw()
-    {
-        try
-        {
-            var acc = _accounts?.FirstOrDefault(a => a.Id == WithdrawAccountId);
-            if (acc == null) throw new Exception("Account not found.");
-
-            if (_withdrawAmount > acc.Balance)
-                throw new Exception("Insufficient funds.");
-
-            await AccountService.WithdrawAsync(acc.Id, _withdrawAmount, "Manual withdraw");
-            acc.Balance -= _withdrawAmount;
-            _success = $"Withdrew {_withdrawAmount:C} from {acc.Name}.";
-            _error = null;
-            _withdrawAmount = 0;
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-            _success = null;
-        }
     }
 
     private async Task DoTransfer()
     {
         try
         {
-            var from = _accounts?.FirstOrDefault(a => a.Id == FromAccountId);
-            var to = _accounts?.FirstOrDefault(a => a.Id == ToAccountId);
+            var from = _accounts?.FirstOrDefault(a => a.Id == Model.FromAccountId);
+            var to = _accounts?.FirstOrDefault(a => a.Id == Model.ToAccountId);
 
-            if (from == null || to == null)
-                throw new Exception("Account not found.");
+            if (from == null)
+                throw new Exception("Source account not found.");
 
-            if (_transferAmount > from.Balance)
+            if (to == null)
+                throw new Exception("Destination account not found.");
+
+            if (Model.Amount > from.Balance)
                 throw new Exception("Insufficient funds in source account.");
 
-            await AccountService.TransferAsync(from.Id, to.Id, _transferAmount, "Manual transfer");
+            // Log to debug
+            Console.WriteLine($"Transferring from {from.Id} to {to.Id} amount {Model.Amount}");
 
-            from.Balance -= _transferAmount;
-            to.Balance += _transferAmount;
-            _success = $"Transferred {_transferAmount:C} from {from.Name} to {to.Name}.";
-            _error = null;
-            _transferAmount = 0;
+            await AccountService.TransferAsync(from.Id, to.Id, Model.Amount, "Manual transfer");
+
+            from.Balance -= Model.Amount;
+            to.Balance += Model.Amount;
+
+            Success = $"Transferred {Model.Amount:C} from {from.Name} to {to.Name}.";
+            Error = null;
+            Model.Amount = 0;
+
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
-            _success = null;
+            Error = ex.Message;
+            Success = null;
+            Console.WriteLine($"Transfer error: {ex}");
         }
     }
+
 }
