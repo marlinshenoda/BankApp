@@ -57,6 +57,17 @@ namespace BankApp1.Services
 
           
             }
+        public async Task SaveAccountsAsync(User user)
+        {
+            if (user == null) throw new ArgumentNullException(nameof(user));
+
+            var key = $"bank_accounts_{user.Id}";
+            var json = JsonSerializer.Serialize(user.Accounts);
+            await _localStorage.SetItemAsStringAsync(key, json);
+
+            Console.WriteLine($"[DEBUG] Saved {user.Accounts.Count} accounts for user {user.Username}");
+        }
+
         public async Task<List<BankAccount>> GetAccountsByUserIdAsync(Guid userId)
         {
             var key = $"bank_accounts_{userId}";

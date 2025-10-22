@@ -111,7 +111,7 @@ else
             NavigationManager.NavigateTo("/signin");
             return;
         }
-        Console.WriteLine($"Loaded {currentUser.Accounts?.Count ?? 0} accounts");
+        Console.WriteLine($"Loaded {currentUser!.Accounts?.Count ?? 0} accounts");
 
       
 

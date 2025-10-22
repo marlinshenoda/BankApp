@@ -10,6 +10,7 @@ namespace BankApp1.Interfaces
         Task<IBankAccount?> GetAccountByIdAsync(Guid id);
         Task<List<BankAccount>> GetAccountsByUserIdAsync(Guid userId);
         Task<List<Transaction>> GetRecentTransactionsAsync(Guid userId);
+        Task SaveAccountsAsync(User user);
 
         Task DepositAsync(Guid accountId, decimal amount, string? description = null);
         Task WithdrawAsync(Guid accountId, decimal amount, string? description = null);

@@ -1,74 +1,180 @@
 ﻿@page "/accounts"
-@using System.ComponentModel.DataAnnotations
+@inject ISignInService SignInService
 @inject IAccountService AccountService
+@inject NavigationManager NavigationManager
 
+<h3 class="mb-4 text-center fw-bold text-primary">My Bank Accounts</h3>
 
-
-
-<h3>Accounts</h3>
-
-@if (accounts == null || !accounts.Any())
+@if (currentUser == null)
 {
-    <p>No accounts yet.</p>
+    <div class="text-center mt-5">
+        <p class="text-muted">Please sign in to view your accounts.</p>
+        <button class="btn btn-outline-primary" @onclick="@(() => NavigationManager.NavigateTo("/signin"))">
+            Go to Sign In
+        </button>
+    </div>
+}
+else if (!currentUser.Accounts.Any())
+{
+    <div class="text-center mt-5">
+        <h5>No accounts found for @currentUser.Username</h5>
+    </div>
 }
 else
 {
-    <table class="table table-striped mt-3">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Currency</th>
-                <th>Balance</th>
-                <th>Last Updated</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var acc in accounts)
+    <div class="container">
+        <div class="row g-4">
+            @foreach (var account in currentUser.Accounts)
             {
-                <tr>
-                    <td>@acc.Name</td>
-                    <td>@acc.Currency</td>
-                    <td>@acc.Balance</td>
-                    <td>@acc.LastUpdated</td>
-                </tr>
+                <div class="col-md-4 col-sm-6">
+                    <div class="card border-0 shadow-sm rounded-4 account-card">
+                        <div class="card-body">
+                            <h5 class="card-title fw-bold">@account.Name</h5>
+                            <p class="text-muted small mb-1">
+                                <strong>Account #:</strong> @account.Id
+                            </p>
+                            <p class="mb-2">
+                                <strong>Type:</strong> @account.AccountType
+                            </p>
+                            <h6 class="fw-bold text-success mb-3">
+                                Balance: @account.Balance.ToString("C")
+                            </h6>
+
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-success"@onclick='() => OpenModal("deposit", account)'>
+
+                                    Deposit
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" @onclick='() => OpenModal("transfer", account)'>
+                                    Transfer
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick='() => OpenModal("withdraw", account)'>
+                                    Withdraw
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             }
-        </tbody>
-    </table>
+        </div>
+    </div>
+}
+
+@if (isModalOpen)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4">
+                <div class="modal-header">
+                    <h5 class="modal-title text-capitalize">@modalType</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Account:</strong> @selectedAccount?.Name</p>
+                    @if (modalType == "transfer")
+                    {
+                        <select class="form-select mb-3" @bind="targetAccountId">
+                            <option value="">-- Select account to transfer to --</option>
+                            @foreach (var acc in currentUser!.Accounts.Where(a => a.Id != selectedAccount?.Id))
+                            {
+                                <option value="@acc.Id">@acc.Name (@acc.Balance.ToString("C"))</option>
+                            }
+                        </select>
+                    }
+
+                    <input type="number" class="form-control mb-3" placeholder="Enter amount" @bind="amount" step="0.01" />
+
+                    @if (!string.IsNullOrEmpty(message))
+                    {
+                        <div class="alert alert-info">@message</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="ConfirmAction">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    private  createAccountModel _model = new();
-    private List<BankAccount> accounts = new();
+    private User? currentUser;
+    private bool isModalOpen;
+    private string modalType = "";
+    private decimal amount;
+    private string? message;
+    private BankAccount? selectedAccount;
+    private Guid targetAccountId;
 
-
-  
-
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-      //  accounts = AccountService.GetAllAccounts();
-    }
-    public class createAccountModel
-    {
-        [Required(ErrorMessage = "Name is required.")]
-        public string? Name{ get; set; }
+        currentUser = await SignInService.GetCurrentUserAsync();
 
-        [Required(ErrorMessage = "Account Type is required.")]
-        public AccountType AccountType{ get; set; }
-
-        [Required(ErrorMessage = "Currency is required.")]
-        public string? Currency { get; set; }
-
-        [Range(0, double.MaxValue, ErrorMessage = "Balance cannot be negative.")]
-        public decimal InitialBalance { get; set; } = 0;
-
-        public void Clear()
+        if (currentUser == null)
         {
-            Name = string.Empty;
-            AccountType = AccountType.Deposit;
-            Currency = string.Empty;
-            InitialBalance = 0;
+            NavigationManager.NavigateTo("/signin");
+            return;
+        }
+    }
+
+    private void OpenModal(string type, BankAccount account)
+    {
+        modalType = type;
+        selectedAccount = account;
+        amount = 0;
+        targetAccountId = Guid.Empty;
+        message = null;
+        isModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        isModalOpen = false;
+    }
+
+    private async Task ConfirmAction()
+    {
+        if (selectedAccount == null || amount <= 0)
+        {
+            message = "Please enter a valid amount.";
+            return;
         }
 
+        try
+        {
+            switch (modalType)
+            {
+                case "deposit":
+                    selectedAccount.Deposit(amount);
+                    message = $"Deposited {amount:C} successfully!";
+                    break;
+
+                case "withdraw":
+                    selectedAccount.Withdraw(amount);
+                    message = $"Withdrew {amount:C} successfully!";
+                    break;
+
+                case "transfer":
+                    var toAccount = currentUser!.Accounts.FirstOrDefault(a => a.Id == targetAccountId);
+                    if (toAccount == null)
+                    {
+                        message = "Select a valid target account.";
+                        return;
+                    }
+                    selectedAccount.TransferTo(toAccount, amount, "Manual Transfer");
+                    message = $"Transferred {amount:C} to {toAccount.Name} successfully!";
+                    break;
+            }
+
+            await AccountService.SaveAccountsAsync(currentUser!);
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(1000);
+            CloseModal();
+        }
+        catch (Exception ex)
+        {
+            message = ex.Message;
+        }
     }
-    }
+}
