@@ -109,7 +109,7 @@ namespace BankApp1.Services
                 await SaveAsync();
             }
 
-        public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string description)
+        public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string? description)
         {
             var user = await _signInService.GetCurrentUserAsync();
             if (user == null)
