@@ -2,7 +2,7 @@
 @inject ISignInService SignInService
 @inject NavigationManager NavigationManager
 @inject IAccountService AccountService
-
+@inject IJSRuntime JS
 
 
 @if (currentUser == null)
@@ -19,35 +19,26 @@ else
                 <h2 class="fw-bold">Welcome, @currentUser.Username 👋</h2>
                 <p class="text-muted">Access & manage your accounts and transactions efficiently.</p>
             </div>
-            <div>
-                <span class="badge bg-primary fs-6 px-3 py-2">
-                    Total Balance: $@totalBalance
-                </span>
+          
+        </div>
+        <!-- Summary Dashboard Card -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-4 p-3 d-flex flex-row align-items-center">
+                    <div style="width: 120px; height: 120px;">
+                        <canvas id="balanceChart"></canvas>
+                    </div>
+                    <div class="ms-4">
+                        <h6 class="fw-bold mb-1">@((currentUser?.Accounts?.Count ?? 0)) Bank Accounts</h6>
+                        <p class="text-muted mb-1">Total Current Balance</p>
+                        <h4 class="fw-bold text-dark">$@totalBalance.ToString("F2")</h4>
+                    </div>
+                </div>
             </div>
         </div>
-        <!-- Bank Accounts Section -->
-        <div class="row mb-4">
-            <h4>My Accounts</h4>
-            @if (currentUser.Accounts != null && currentUser.Accounts.Any())
-            {
-                @foreach (var account in currentUser.Accounts)
-                {
-                    <div class="col-md-4 mb-3">
-                        <div class="card shadow-sm border-0 rounded-3">
-                            <div class="card-body">
-                                <h5 class="card-title">@account.Name</h5>
-                                <p class="text-muted">Account Number: @account.Id</p>
-                                <h6 class="fw-bold text-success">Balance: $@account.Balance</h6>
-                            </div>
-                        </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <p>No accounts found for this user.</p>
-            }
-        </div>
+
+     
+
 
         <!-- Recent Transactions Section -->
         <div class="row">
@@ -101,7 +92,7 @@ else
     private decimal totalBalance;
     private List<Transaction> recentTransactions = new();
     private Func<Task>? _onChangeHandler;
-
+   
     protected override async Task OnInitializedAsync()
     {
         currentUser = await SignInService.GetCurrentUserAsync();
@@ -134,4 +125,20 @@ else
        
 
     }
+   
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && currentUser?.Accounts != null)
+        {
+            var accountsData = currentUser.Accounts.Select(a => new
+            {
+                name = a.Name,
+                balance = a.Balance
+            });
+
+            await JS.InvokeVoidAsync("renderBalanceChart", accountsData);
+        }
+    }
+
 }
