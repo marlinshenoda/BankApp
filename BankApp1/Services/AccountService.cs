@@ -14,6 +14,7 @@ namespace BankApp1.Services
             private readonly ILocalStorageService _localStorage;
             private List<BankAccount> _accounts = new();
             private readonly ISignInService _signInService;
+            private const string TransactionsKey = "recentTransactions";
 
         public AccountService(ILocalStorageService localStorage, ISignInService signInService)
             {
@@ -104,21 +105,52 @@ namespace BankApp1.Services
     
         public async Task DepositAsync(Guid accountId, decimal amount, string? description = null)
             {
-                await LoadAsync();
-                var account = _accounts.FirstOrDefault(a => a.Id == accountId)
-                    ?? throw new KeyNotFoundException("Account not found.");
-                account.Deposit(amount);
-                await SaveAsync();
-            }
+            var user = await _signInService.GetCurrentUserAsync();
+            if (user == null)
+                throw new InvalidOperationException("No signed-in user found.");
+
+            var accountKey = $"bank_accounts_{user.Id}";
+            var accounts = await _localStorage.GetItemAsync<List<BankAccount>>(accountKey) ?? new List<BankAccount>();
+
+            var account = accounts.FirstOrDefault(a => a.Id == accountId)
+                ?? throw new KeyNotFoundException("Account not found.");
+
+            account.Deposit(amount);
+            await _localStorage.SetItemAsync(accountKey, accounts);
+            // Log transaction
+            await AddTransactionAsync(user.Id, new Transaction
+            {
+                Timestamp = DateTime.Now,
+                Description = description ?? "Deposit",
+                Amount = amount,
+                Status = "Success",
+                Category = "Deposit"
+            });
+        }
 
             public async Task WithdrawAsync(Guid accountId, decimal amount, string? description = null)
             {
-                await LoadAsync();
-                var account = _accounts.FirstOrDefault(a => a.Id == accountId)
-                    ?? throw new KeyNotFoundException("Account not found.");
-                account.Withdraw(amount);
-                await SaveAsync();
-            }
+            var user = await _signInService.GetCurrentUserAsync();
+            if (user == null)
+                throw new InvalidOperationException("No signed-in user found.");
+
+            var accountKey = $"bank_accounts_{user.Id}";
+            var accounts = await _localStorage.GetItemAsync<List<BankAccount>>(accountKey) ?? new List<BankAccount>();
+
+            var account = accounts.FirstOrDefault(a => a.Id == accountId)
+                ?? throw new KeyNotFoundException("Account not found.");
+
+            account.Withdraw(amount);
+            await _localStorage.SetItemAsync(accountKey, accounts);
+            await AddTransactionAsync(user.Id, new Transaction
+            {
+                Timestamp = DateTime.Now,
+                Description = description ?? "Withdrawal",
+                Amount = -amount,
+                Status = "Success",
+                Category = "Withdrawal"
+            });
+        }
 
         public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string? description)
         {
@@ -145,18 +177,40 @@ namespace BankApp1.Services
             await _localStorage.SetItemAsync(accountsKey, accounts);
 
             Console.WriteLine($"[TransferAsync] ✅ Transfer completed between {from.Id} and {to.Id}");
+            // Record both sides of the transfer
+            await AddTransactionAsync(from.UserId, new Transaction
+            {
+                Timestamp = DateTime.Now,
+                Description = description ?? $"Transfer to {to.Name}",
+                Amount = -amount,
+                Status = "Success",
+                Category = "Transfer"
+            });
+
+            await AddTransactionAsync(to.UserId, new Transaction
+            {
+                Timestamp = DateTime.Now,
+                Description = description ?? $"Transfer from {from.Name}",
+                Amount = amount,
+                Status = "Success",
+                Category = "Transfer"
+            });
+        }
+        public async Task AddTransactionAsync(Guid userId, Transaction transaction)
+        {
+            var key = $"recentTransactions_{userId}";
+            var transactions = await _localStorage.GetItemAsync<List<Transaction>>(key) ?? new List<Transaction>();
+            transactions.Insert(0, transaction); // newest first
+            await _localStorage.SetItemAsync(key, transactions);
         }
 
         public async Task<List<Transaction>> GetRecentTransactionsAsync(Guid userId)
         {
-            await Task.Delay(100); 
-            return new List<Transaction>
-    {
-        new Transaction { Timestamp = DateTime.Now.AddDays(-1), Description = "Grocery Store", Amount = -150m, Status = "Success", Category = "Food" },
-        new Transaction { Timestamp = DateTime.Now.AddDays(-2), Description = "Salary Deposit", Amount = 2500m, Status = "Success", Category = "Income" },
-        new Transaction { Timestamp = DateTime.Now.AddDays(-3), Description = "Electric Bill", Amount = -200m, Status = "Success", Category = "Utilities" }
-    };
+            var key = $"recentTransactions_{userId}";
+            var transactions = await _localStorage.GetItemAsync<List<Transaction>>(key);
+            return transactions ?? new List<Transaction>();
         }
+
 
 
     }

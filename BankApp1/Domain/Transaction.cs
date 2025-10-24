@@ -7,9 +7,9 @@
         public TransactionType TransactionType { get; set; }
         public decimal Amount { get; set; }           // positivt värde
         public decimal BalanceAfter { get; set; }     // konto-saldo efter transaktion
-        public string Description { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string Category { get; set; } = "";
+        public string Description { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
 
         public Guid? FromAccountId { get; set; } 
         public Guid? ToAccountId { get; set; }

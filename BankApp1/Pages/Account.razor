@@ -83,6 +83,7 @@ else
                     }
 
                     <input type="number" class="form-control mb-3" placeholder="Enter amount" @bind="amount" step="0.01" />
+                    <input type="text" class="form-control mb-3" placeholder="Enter description (optional)" @bind="description" />
 
                     @if (!string.IsNullOrEmpty(message))
                     {
@@ -106,6 +107,7 @@ else
     private string? message;
     private BankAccount? selectedAccount;
     private Guid targetAccountId;
+    private string? description;
 
     protected override async Task OnInitializedAsync()
     {
@@ -147,11 +149,27 @@ else
             {
                 case "deposit":
                     selectedAccount.Deposit(amount);
+                    await AccountService.AddTransactionAsync(currentUser!.Id, new Transaction
+                        {
+                            Timestamp = DateTime.Now,
+                            Description = string.IsNullOrWhiteSpace(description) ? "Deposit" : description,
+                            Amount = amount,
+                            Status = "Success",
+                            Category = "Deposit"
+                        });
                     message = $"Deposited {amount:C} successfully!";
                     break;
 
                 case "withdraw":
                     selectedAccount.Withdraw(amount);
+                    await AccountService.AddTransactionAsync(currentUser!.Id, new Transaction
+                        {
+                            Timestamp = DateTime.Now,
+                            Description = string.IsNullOrWhiteSpace(description) ? "Withdrawal" : description,
+                            Amount = amount,
+                            Status = "Success",
+                            Category = "Withdraw"
+                        });
                     message = $"Withdrew {amount:C} successfully!";
                     break;
 
@@ -162,7 +180,15 @@ else
                         message = "Select a valid target account.";
                         return;
                     }
-                    selectedAccount.TransferTo(toAccount, amount, "Manual Transfer");
+
+                    selectedAccount.TransferTo(toAccount, amount, description ?? "Manual Transfer");
+                    await AccountService.AddTransactionAsync(currentUser!.Id, new Transaction
+                        {
+                            Timestamp = DateTime.Now,
+                            Amount = amount,
+                            Status = "Success",
+                            Category = "Transfer"
+                        });
                     message = $"Transferred {amount:C} to {toAccount.Name} successfully!";
                     break;
             }

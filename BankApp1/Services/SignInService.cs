@@ -32,7 +32,7 @@ namespace BankApp1.Services
                 throw new ArgumentException("Username required.");
 
             // Use username as the key for now
-            var key = $"bankapp_state_{username.ToLower()}";
+            var key = $"bank_accounts_{username.ToLower()}";
             var storedUser = await _storage.GetAsync<User>(key);
             User user;
 
