@@ -4,7 +4,6 @@
 @inject IAccountService AccountService
 @inject IJSRuntime JS
 
-
 @if (currentUser == null)
 {
     <div class="text-center mt-5">
@@ -19,8 +18,8 @@ else
                 <h2 class="fw-bold">Welcome, @currentUser.Username 👋</h2>
                 <p class="text-muted">Access & manage your accounts and transactions efficiently.</p>
             </div>
-          
         </div>
+
         <!-- Summary Dashboard Card -->
         <div class="row mb-4">
             <div class="col-md-6">
@@ -37,8 +36,61 @@ else
             </div>
         </div>
 
-     
+        <!-- Filters / Search / Sort -->
+        <div class="card mb-3 p-3">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Search (Description)</label>
+                    <input class="form-control" @bind="searchText" @bind:event="oninput" placeholder="Search transactions..." />
+                </div>
 
+                <div class="col-md-2">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" @onchange="OnCategoryChanged">
+                        <option value="">All</option>
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" @onchange="OnStatusChanged">
+                        <option value="">All</option>
+                        <option value="Success">Success</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Failed">Failed</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Sort by</label>
+                    <select class="form-select" @onchange="OnSortChanged">
+                        <option value="date_desc">Date (Newest first)</option>
+                        <option value="date_asc">Date (Oldest first)</option>
+                        <option value="amount_desc">Amount (Highest first)</option>
+                        <option value="amount_asc">Amount (Lowest first)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-flex justify-content-end">
+                    <button class="btn btn-outline-secondary me-2" @onclick="ClearFilters">Clear</button>
+                    <button class="btn btn-primary" @onclick="ApplyFilters">Apply</button>
+                </div>
+
+                <div class="col-md-3 mt-2">
+                    <label class="form-label">From Date</label>
+                    <input type="date" class="form-control" @bind="dateFrom" />
+                </div>
+
+                <div class="col-md-3 mt-2">
+                    <label class="form-label">To Date</label>
+                    <input type="date" class="form-control" @bind="dateTo" />
+                </div>
+            </div>
+        </div>
 
         <!-- Recent Transactions Section -->
         <div class="row">
@@ -48,9 +100,9 @@ else
             {
                 <p>Loading transactions...</p>
             }
-            else if (recentTransactions.Count == 0)
+            else if (filteredTransactions == null || filteredTransactions.Count == 0)
             {
-                <p class="text-muted">No recent transactions available.</p>
+                <p class="text-muted">No transactions match your search or filters.</p>
             }
             else
             {
@@ -65,13 +117,13 @@ else
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var txn in recentTransactions)
+                        @foreach (var txn in filteredTransactions)
                         {
                             <tr>
-                                <td>@txn.Timestamp.ToShortDateString()</td>
+                                <td>@txn.Timestamp.ToString("yyyy-MM-dd")</td>
                                 <td>@txn.Description</td>
                                 <td class="@(txn.Amount < 0 ? "text-danger" : "text-success")">
-                                    $@txn.Amount
+                                    $@txn.Amount.ToString("F2")
                                 </td>
                                 <td>
                                     <span class="badge bg-@(txn.Status == "Success" ? "success" : "secondary")">
@@ -92,41 +144,59 @@ else
     private User? currentUser;
     private decimal totalBalance;
     private List<Transaction> recentTransactions = new();
+    private List<Transaction> filteredTransactions = new();
     private Func<Task>? _onChangeHandler;
-   
+
+    // Filter state
+    private string searchText = string.Empty;
+    private string selectedCategory = string.Empty;
+    private string selectedStatus = string.Empty;
+    private DateTime? dateFrom;
+    private DateTime? dateTo;
+    private string sortOption = "date_desc";
+
+    // Distinct categories
+    private List<string> categories = new();
+
     protected override async Task OnInitializedAsync()
     {
         currentUser = await SignInService.GetCurrentUserAsync();
         if (!SignInService.IsSignedIn)
         {
-            
             NavigationManager.NavigateTo("/signin");
             return;
         }
-        Console.WriteLine($"Loaded {currentUser!.Accounts?.Count ?? 0} accounts");
 
-      
-
-            totalBalance = currentUser.Accounts?.Sum(a => a.Balance) ?? 0;
-        await Task.Delay(200);
-
+        totalBalance = currentUser.Accounts?.Sum(a => a.Balance) ?? 0;
         recentTransactions = await AccountService.GetRecentTransactionsAsync(currentUser!.Id);
         Console.WriteLine($"[Home] Loaded {recentTransactions.Count} transactions");
 
-        
+        categories = recentTransactions
+            .Select(t => t.Category ?? string.Empty)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+
+        ApplyFilters();
+
         _onChangeHandler = async () =>
         {
             currentUser = await SignInService.GetCurrentUserAsync();
             totalBalance = currentUser?.Accounts?.Sum(a => a.Balance) ?? 0;
             recentTransactions = await AccountService.GetRecentTransactionsAsync(currentUser!.Id);
+
+            categories = recentTransactions
+                .Select(t => t.Category ?? string.Empty)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            ApplyFilters();
             await InvokeAsync(StateHasChanged);
-         
         };
-
-        Console.WriteLine("[DEBUG] Loading transactions for user: " + currentUser.Id);
-
     }
-   
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -142,4 +212,77 @@ else
         }
     }
 
+    private void OnCategoryChanged(ChangeEventArgs e)
+    {
+        selectedCategory = e?.Value?.ToString() ?? string.Empty;
+    }
+
+    private void OnStatusChanged(ChangeEventArgs e)
+    {
+        selectedStatus = e?.Value?.ToString() ?? string.Empty;
+    }
+
+    private void OnSortChanged(ChangeEventArgs e)
+    {
+        sortOption = e?.Value?.ToString() ?? "date_desc";
+    }
+
+    private void ClearFilters()
+    {
+        searchText = string.Empty;
+        selectedCategory = string.Empty;
+        selectedStatus = string.Empty;
+        dateFrom = null;
+        dateTo = null;
+        sortOption = "date_desc";
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        if (recentTransactions == null)
+        {
+            filteredTransactions = new List<Transaction>();
+            return;
+        }
+
+        IEnumerable<Transaction> query = recentTransactions;
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            var txt = searchText.Trim().ToLowerInvariant();
+            query = query.Where(t => !string.IsNullOrEmpty(t.Description) && t.Description.ToLowerInvariant().Contains(txt));
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedCategory))
+        {
+            query = query.Where(t => string.Equals(t.Category ?? string.Empty, selectedCategory, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedStatus))
+        {
+            query = query.Where(t => string.Equals(t.Status ?? string.Empty, selectedStatus, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (dateFrom.HasValue)
+        {
+            var fromDate = dateFrom.Value.Date;
+            query = query.Where(t => t.Timestamp.Date >= fromDate);
+        }
+
+        if (dateTo.HasValue)
+        {
+            var toDate = dateTo.Value.Date;
+            query = query.Where(t => t.Timestamp.Date <= toDate);
+        }
+
+        filteredTransactions = sortOption switch
+        {
+            "date_asc" => query.OrderBy(t => t.Timestamp).ToList(),
+            "date_desc" => query.OrderByDescending(t => t.Timestamp).ToList(),
+            "amount_asc" => query.OrderBy(t => t.Amount).ToList(),
+            "amount_desc" => query.OrderByDescending(t => t.Amount).ToList(),
+            _ => query.OrderByDescending(t => t.Timestamp).ToList()
+        };
+    }
 }
