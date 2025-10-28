@@ -1,4 +1,5 @@
 ﻿using BankApp1.Domain;
+using BankApp1.Pages;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -109,15 +110,12 @@ namespace BankApp1.Services
             if (storedUser == null) return null;
 
             _currentUser = storedUser;
-
-            // Load bank accounts if exist
             var accountsKey = $"bank_accounts_{_currentUser.Id}";
-            var accountsJson = await _storage.GetAsync<string>(accountsKey);
+            var accounts = await _storage.GetAsync<List<BankAccount>>(accountsKey);
 
-            _currentUser.Accounts = string.IsNullOrWhiteSpace(accountsJson)
-                ? new List<BankAccount>()
-                : JsonSerializer.Deserialize<List<BankAccount>>(accountsJson) ?? new List<BankAccount>();
+            _currentUser.Accounts = accounts ?? new List<BankAccount>();
             _isSignedIn = false;
+
 
             return _currentUser;
         }
