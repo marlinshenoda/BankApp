@@ -167,7 +167,7 @@ else
             return;
         }
 
-        totalBalance = currentUser.Accounts?.Sum(a => a.Balance) ?? 0;
+        totalBalance = currentUser!.Accounts?.Sum(a => a.Balance) ?? 0;
         recentTransactions = await AccountService.GetRecentTransactionsAsync(currentUser!.Id);
         Console.WriteLine($"[Home] Loaded {recentTransactions.Count} transactions");
 
