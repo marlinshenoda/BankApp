@@ -1,9 +1,14 @@
 ﻿@inherits LayoutComponentBase
+@inject ISignInService SignInService
+
+
 <div class="page">
+    @if (SignInService.IsSignedIn)
+{
     <div class="sidebar">
         <NavMenu />
     </div>
-
+}
     <main>
        
 
