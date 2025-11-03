@@ -13,6 +13,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ISignInService, SignInService>();
 
 builder.Services.AddScoped<IStorageService, StorageService>();
+builder.Services.AddBlazorBootstrap();
+
 
 builder.Services.AddBlazoredLocalStorage();
 //var host = builder.Build();
