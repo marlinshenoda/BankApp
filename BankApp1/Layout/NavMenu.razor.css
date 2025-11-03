@@ -24,3 +24,7 @@
     width: 240px;
     padding-top: 20px;
 }
+.navbar-brand {
+    font-weight: 700;
+    background-color: #ffffff;
+}
