@@ -65,9 +65,16 @@ else
                 <option value="@a.Id">@a.Name (@a.Balance.ToString("C"))</option>
             }
         </select>
-
+        <select class="form-select mb-3" @bind="Model.selectedCategory">
+            <option value="Food">🍔 Food</option>
+            <option value="Rent">🏠 Rent</option>
+            <option value="Transport">🚆 Transport</option>
+            <option value="Shopping">🛍️ Shopping</option>
+            <option value="Other">💼 Other</option>
+        </select>
         <input type="number" step="0.01" @bind="Model.Amount" placeholder="Amount" class="form-control mb-2" />
         <button @onclick="DoTransfer" disabled="@(!CanTransfer)" class="btn btn-primary">Transfer</button>
+     
     </div>
 
     @if (!string.IsNullOrEmpty(Error))
@@ -114,6 +121,8 @@ else
         public Guid FromAccountId { get; set; }
         public Guid ToAccountId { get; set; }
         public decimal Amount { get; set; }
+        public string ?selectedCategory { get; set; }
+
     }
     public class DepositFormModel
     {
@@ -152,7 +161,7 @@ else
             // Log to debug
             Console.WriteLine($"Transferring from {from.Id} to {to.Id} amount {Model.Amount}");
 
-            await AccountService.TransferAsync(from.Id, to.Id, Model.Amount, "Manual transfer");
+            await AccountService.TransferAsync(from.Id, to.Id, Model.Amount, "Manual transfer", Model.selectedCategory);
 
             from.Balance -= Model.Amount;
             to.Balance += Model.Amount;

@@ -16,7 +16,7 @@ namespace BankApp1.Interfaces
         Guid UserId { get; set; }
         void Withdraw(decimal amount);  
         void Deposit(decimal amount);
-        void TransferTo(BankAccount to, decimal amount, string? description = null);
+        void TransferTo(BankAccount to, decimal amount, string? description = null, string? category="Other");
 
     }
 }

@@ -17,6 +17,7 @@ namespace BankApp1.Domain
         public DateTime LastUpdated { get; private set; }
         public Guid UserId { get; set; }
         public AccountType AccountType { get; set; }
+        public decimal InterestRate { get; set; } = 0.02m;
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
         public BankAccount() { }
         public BankAccount(string name, string currency, decimal initialBalance , AccountType accountType , Guid userId)
@@ -49,7 +50,15 @@ namespace BankApp1.Domain
             Balance -= amount;
             LastUpdated = DateTime.Now;
         }
-        public void TransferTo(BankAccount to, decimal amount, string? description = null)
+        public void ApplyInterest()
+        {
+            if (AccountType == AccountType.Saving)
+            {
+                var interest = Balance * InterestRate;
+                Balance += interest;
+            }
+        }
+        public void TransferTo(BankAccount to, decimal amount, string? description = null,string? category="Other")
         {
             if (amount <= 0)
                 throw new ArgumentException("Transfer amount must be positive.");
@@ -67,6 +76,7 @@ namespace BankApp1.Domain
                 Amount = amount,
                 BalanceAfter = Balance,
                 Description = description ?? $"Transfer to {to.Name}",
+                Category= category ?? "Other",
                 ToAccountId = to.Id
             });
 
@@ -81,10 +91,12 @@ namespace BankApp1.Domain
                 BalanceAfter = to.Balance,
                 Description = description ?? $"Transfer from {Name}",
                 FromAccountId = Id,
+                Category = category ?? "Other",
                 ToAccountId = to.Id
 
             });
         }
+
 
     }
 }

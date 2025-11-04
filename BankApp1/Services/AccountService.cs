@@ -1,7 +1,6 @@
 ﻿
 using BankApp1.Domain;
 using BankApp1.Interfaces;
-using BankApp1.Pages;
 using Blazored.LocalStorage;
 using System.Text.Json;
 using System.Xml.Linq;
@@ -28,6 +27,25 @@ namespace BankApp1.Services
             _accounts = await _localStorage.GetItemAsync<List<BankAccount>>(key) ?? new List<BankAccount>();
 
         }
+        public async Task ApplyInterestToSavingsAsync(Guid userId)
+        {
+            var user = await _signInService.GetCurrentUserAsync(); // or however you retrieve the user
+            if (user == null || user.Id != userId) return;
+
+            foreach (var account in user.Accounts)
+            {
+                // Apply interest only to savings accounts
+                if (account.AccountType == AccountType.Saving ||
+                    account.AccountType.ToString().ToLower().Contains("saving"))
+                {
+                    account.ApplyInterest();
+                }
+            }
+
+            await SaveAccountsAsync(user); // persist updated balances
+        }
+
+
         private async Task<string> GetUserStorageKeyAsync()
         {
             var user = await _signInService.GetCurrentUserAsync();
@@ -152,7 +170,7 @@ namespace BankApp1.Services
             });
         }
 
-        public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string? description)
+        public async Task TransferAsync(Guid fromAccountId, Guid toAccountId, decimal amount, string? description, string? category )
         {
             var user = await _signInService.GetCurrentUserAsync();
             if (user == null)
@@ -171,10 +189,11 @@ namespace BankApp1.Services
             var to = accounts.FirstOrDefault(a => a.Id == toAccountId)
                 ?? throw new KeyNotFoundException($"Destination account {toAccountId} not found in local storage.");
 
-            from.TransferTo(to, amount, description);
+            from.TransferTo(to, amount, description,category);
 
             // Save back to local storage
             await _localStorage.SetItemAsync(accountsKey, accounts);
+            Console.WriteLine($"[TransferAsync] Category used: {category}");
 
             Console.WriteLine($"[TransferAsync] ✅ Transfer completed between {from.Id} and {to.Id}");
             // Record both sides of the transfer
@@ -184,7 +203,7 @@ namespace BankApp1.Services
                 Description = description ?? $"Transfer to {to.Name}",
                 Amount = -amount,
                 Status = "Success",
-                Category = "Transfer"
+                Category = category ?? "Other"
             });
 
             await AddTransactionAsync(to.UserId, new Transaction
@@ -193,7 +212,7 @@ namespace BankApp1.Services
                 Description = description ?? $"Transfer from {from.Name}",
                 Amount = amount,
                 Status = "Success",
-                Category = "Transfer"
+                Category = category ?? "Other"
             });
         }
         public async Task AddTransactionAsync(Guid userId, Transaction transaction)

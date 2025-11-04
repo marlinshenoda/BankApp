@@ -5,6 +5,8 @@
         Deposit,
         Withdrawal,
         TransferIn,
-        TransferOut
+        TransferOut,
+        Interest
+
     }
 }
