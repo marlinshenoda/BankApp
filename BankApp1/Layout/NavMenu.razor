@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <a class="navbar-brand fw-bold text-primary" href="">Horizon</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
+           @*  <span class="navbar-toggler-icon"></span> *@
         </button>
     </div>
 </div>
@@ -18,10 +18,6 @@
         </NavLink>
 
         <NavLink class="nav-link d-flex align-items-center py-2" href="transactions">
-            <i class="bi bi-journal-text me-2 text-secondary fs-5"></i> Transaction History
-        </NavLink>
-
-        <NavLink class="nav-link d-flex align-items-center py-2" href="transfer">
             <i class="bi bi-arrow-left-right me-2 text-secondary fs-5"></i> Transfer Funds
         </NavLink>
 
@@ -30,9 +26,9 @@
         </NavLink>
     </nav>
 </div>
-
 @code {
-    private bool collapseNavMenu = true;
+    private bool collapseNavMenu = false;
+
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
@@ -40,3 +36,5 @@
         collapseNavMenu = !collapseNavMenu;
     }
 }
+
+

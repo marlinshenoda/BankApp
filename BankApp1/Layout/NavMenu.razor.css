@@ -6,25 +6,18 @@
     transition: all 0.2s ease-in-out;
 }
 
-    .nav-link:hover {
-        background-color: #f0f4ff;
-        color: #0d6efd;
-    }
-
-    .nav-link.active {
-        background-color: #0d6efd;
-        color: white !important;
-    }
-
-        .nav-link.active i {
-            color: white !important;
-        }
+  
 
 .nav-scrollable {
     width: 240px;
     padding-top: 20px;
 }
-.navbar-brand {
-    font-weight: 700;
-    background-color: #ffffff;
+
+.navbar-toggler {
+    display: none;
+}
+@media (max-width: 940.98px) {
+    .navbar-toggler {
+        display: block;
+    }
 }
