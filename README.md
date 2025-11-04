@@ -1,6 +1,6 @@
 ## 🧠 Overview
 A simple Blazor-based banking app for managing accounts, transactions, deposits, withdrawals, and transfers.  
-Built as part of the school project in .NET 8 using Blazored.LocalStorage.
+Built as part of the YH project in .NET 8 using Blazored.LocalStorage.
 ---
 
 ## ⚙️ Core Features 
