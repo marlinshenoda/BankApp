@@ -20,6 +20,8 @@ Built as part of the YH project in .NET 8 using Blazored.LocalStorage.
 - 4️⃣ Transactions (/transaction) – Form page to deposit, withdraw, or transfer funds.
 - 5️⃣ Connect Bank (/connectbank) – Create and add new bank accounts.
 
+## 📸 Screenshots
+
 <img width="1872" height="908" alt="image" src="https://github.com/user-attachments/assets/d786c03c-3b4d-4244-a641-5d512844ff3e" />
 
 <img width="1865" height="851" alt="image" src="https://github.com/user-attachments/assets/0f46f9aa-fd11-4570-bd97-c5a3345e9afe" />
