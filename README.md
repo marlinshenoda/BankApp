@@ -12,7 +12,7 @@ Built as part of the YH project in .NET 8 using Blazored.LocalStorage.
 - Apply Interest to Savings
 - Budget/Expense Categories (e.g. Food, Rent, Transport)
 
- ##🖥 Pages 
+ 🖥 Pages 
 
 1️⃣ Sign In (/signin) – User enters username & PIN and signs into the application.
 2️⃣ Home (/) – Shows total balance, account chart, and searchable/filterable transaction history.
