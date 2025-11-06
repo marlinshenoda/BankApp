@@ -48,10 +48,10 @@ else
                     <label class="form-label">Category</label>
                     <select class="form-select" @onchange="OnCategoryChanged">
                         <option value="">All</option>
-                        @foreach (var cat in categories)
-                        {
-                            <option value="@cat">@cat</option>
-                        }
+                        <option value="Food">🍔 Food</option>
+                        <option value="Rent">🏠 Rent</option>
+                        <option value="Transport">🚆 Transport</option>
+                        <option value="Shopping">🛍️ Shopping</option>
                     </select>
                 </div>
 

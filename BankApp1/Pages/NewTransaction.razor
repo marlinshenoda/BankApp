@@ -66,11 +66,12 @@ else
             }
         </select>
         <select class="form-select mb-3" @bind="Model.selectedCategory">
+            <option value="Other">💼 Other</option>
             <option value="Food">🍔 Food</option>
             <option value="Rent">🏠 Rent</option>
             <option value="Transport">🚆 Transport</option>
             <option value="Shopping">🛍️ Shopping</option>
-            <option value="Other">💼 Other</option>
+           
         </select>
         <input type="number" step="0.01" @bind="Model.Amount" placeholder="Amount" class="form-control mb-2" />
         <button @onclick="DoTransfer" disabled="@(!CanTransfer)" class="btn btn-primary">Transfer</button>

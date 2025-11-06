@@ -37,12 +37,31 @@ namespace BankApp1.Services
                 // Apply interest only to savings accounts
                 if (account.AccountType == AccountType.Saving ||
                     account.AccountType.ToString().ToLower().Contains("saving"))
+
                 {
-                    account.ApplyInterest();
+                    decimal oldBalance = account.Balance;
+
+                    account.ApplyInterest(); // this updates balance internally
+
+                    decimal interestEarned = account.Balance - oldBalance;
+
+                    if (interestEarned > 0)
+                    {
+                        await AddTransactionAsync(user.Id, new Transaction
+                        {
+                            Timestamp = DateTime.Now,
+                            Description = $"Interest Applied to {account.Name}",
+                            Amount = interestEarned,
+                            Status = "Success",
+                            Category = "Interest"
+                        });
+                    }
                 }
             }
 
             await SaveAccountsAsync(user); // persist updated balances
+            await _signInService.NotifyChange();
+
         }
 
 

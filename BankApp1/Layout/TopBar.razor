@@ -38,11 +38,13 @@
 
     private void SignIn()
     {
-        NavigationManager.NavigateTo("/signin"); // Or open a modal
+        NavigationManager.NavigateTo("/signin"); 
     }
 
     private async Task SignOut()
     {
         await SignInService.SignOutAsync();
+   
+        NavigationManager.NavigateTo("/signin", forceLoad: true);
     }
 }
