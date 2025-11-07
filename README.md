@@ -20,6 +20,19 @@ Built as part of the YH project in .NET 8 using Blazored.LocalStorage.
 - 4️⃣ Transactions (/transaction) – Form page to deposit, withdraw, or transfer funds.
 - 5️⃣ Connect Bank (/connectbank) – Create and add new bank accounts.
 
+  ## Test Accounts
+
+You can log in with the following pre-created users:
+
+| Username | PIN  |
+|---------|------|
+| test1   | 1111 |
+| test2   | 2222 |
+
+If you enter a new username and PIN on the Sign In page,
+a new user will be created automatically.
+
+
 ## 📸 Screenshots
 
 <img width="1872" height="908" alt="image" src="https://github.com/user-attachments/assets/d786c03c-3b4d-4244-a641-5d512844ff3e" />
