@@ -12,14 +12,15 @@ Built as part of the YH project in .NET 8 using Blazored.LocalStorage.
 - Apply Interest to Savings
 - Budget/Expense Categories (e.g. Food, Rent, Transport)
 
- 🖥 Pages
- 1️⃣ Sign In Page (/signin)(+User enters username and PIN Calls +SignInService.SignInAsync() +If successful → navigates to Home)
- 2️⃣ Home Page (/)(+Welcome message +Total balance across accounts +Chart (balances per account)
-    +Recent Transaction List with:✅ Search✅ Category filter✅ Status filter✅ Date range✅ Sorting)
- 3️⃣ My Accounts Page (/accounts)(+Displays cards for each account. +Each account has action buttons:Deposit,Withdraw,Transfer and Apply Interest (Saving Only) +A modal pops up to enter:
-Amount, Description (optional)and Category)
- 4️⃣ Transfer Page (/transaction)(+ A dedicated transfer form(deposit , Withdraw and transfer))
- 5️⃣ Connect Bank (/connectbank)( +create a new bank account)
+## 🖥 Pages 
+
+- 1️⃣ Sign In (/signin) – User enters username & PIN and signs into the application.
+- 2️⃣ Home (/) – Shows total balance, account chart, and searchable/filterable transaction history.
+- 3️⃣ My Accounts (/accounts) – Displays user accounts with actions (Deposit, Withdraw, Transfer, Apply Interest).
+- 4️⃣ Transactions (/transaction) – Form page to deposit, withdraw, or transfer funds.
+- 5️⃣ Connect Bank (/connectbank) – Create and add new bank accounts.
+
+## 📸 Screenshots
 
 <img width="1872" height="908" alt="image" src="https://github.com/user-attachments/assets/d786c03c-3b4d-4244-a641-5d512844ff3e" />
 
