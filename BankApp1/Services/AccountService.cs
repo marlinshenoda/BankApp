@@ -29,7 +29,7 @@ namespace BankApp1.Services
         }
         public async Task ApplyInterestToSavingsAsync(Guid userId)
         {
-            var user = await _signInService.GetCurrentUserAsync(); // or however you retrieve the user
+            var user = await _signInService.GetCurrentUserAsync(); 
             if (user == null || user.Id != userId) return;
 
             foreach (var account in user.Accounts)

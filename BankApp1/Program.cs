@@ -17,6 +17,16 @@ builder.Services.AddBlazorBootstrap();
 
 
 builder.Services.AddBlazoredLocalStorage();
+var app = builder.Build();
+
+if (builder.HostEnvironment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var storage = scope.ServiceProvider.GetRequiredService<IStorageService>();
+    await BankApp1.Services.Seed.DatabaseSeeder.SeedAsync(storage);
+}
+
+
 //var host = builder.Build();
 
 //// One-time cleanup for old corrupted data
@@ -26,4 +36,4 @@ builder.Services.AddBlazoredLocalStorage();
 //await host.RunAsync();
 
 
-await builder.Build().RunAsync();
+await app.RunAsync();
